@@ -1,9 +1,15 @@
 import 'package:flutter/material.dart';
 import 'login_screen.dart';
+import 'home_screen.dart';
 
-class SocialLoginScreen extends StatelessWidget {
+class SocialLoginScreen extends StatefulWidget {
   const SocialLoginScreen({super.key});
 
+  @override
+  State<SocialLoginScreen> createState() => _SocialLoginScreenState();
+}
+
+class _SocialLoginScreenState extends State<SocialLoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -109,7 +115,7 @@ class SocialLoginScreen extends StatelessWidget {
                         SizedBox(
                           width: double.infinity,
                           child: ElevatedButton(
-                            onPressed: () {},
+                            onPressed: () => _handleGoogleLogin(context),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.amber[700],
                               padding: const EdgeInsets.symmetric(vertical: 16),
@@ -195,7 +201,7 @@ class SocialLoginScreen extends StatelessWidget {
                         const SizedBox(height: 24),
                         // Guest option
                         TextButton(
-                          onPressed: () {},
+                          onPressed: () => _handleGuestLogin(context),
                           child: Text(
                             'Continue as Guest',
                             style: TextStyle(
@@ -222,6 +228,40 @@ class SocialLoginScreen extends StatelessWidget {
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  void _handleGoogleLogin(BuildContext context) async {
+    // Simulate Google login
+    await Future.delayed(const Duration(seconds: 1));
+    if (mounted) {
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (context) => const HomeScreen()),
+        (route) => false,
+      );
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Signed in with Google successfully!'),
+          backgroundColor: Colors.green,
+          duration: Duration(seconds: 2),
+        ),
+      );
+    }
+  }
+
+  void _handleGuestLogin(BuildContext context) {
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (context) => const HomeScreen()),
+      (route) => false,
+    );
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Continuing as guest'),
+        backgroundColor: Colors.blue,
+        duration: Duration(seconds: 2),
       ),
     );
   }
