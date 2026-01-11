@@ -8,9 +8,13 @@ class ProgressRecord {
   final LessonPlayStatus status;
   final int starsEarned;
   final int bestScore;
+  final int totalQuestions;
   final int attempts;
   final Timestamp? lastPlayedAt;
   final Timestamp? completedAt;
+  final int lastDurationSeconds;
+  final int lastHintsUsed;
+  final int fastestDurationSeconds;
 
   const ProgressRecord({
     required this.id,
@@ -18,9 +22,13 @@ class ProgressRecord {
     required this.status,
     required this.starsEarned,
     required this.bestScore,
+    required this.totalQuestions,
     required this.attempts,
     required this.lastPlayedAt,
     required this.completedAt,
+    required this.lastDurationSeconds,
+    required this.lastHintsUsed,
+    required this.fastestDurationSeconds,
   });
 
   factory ProgressRecord.fromDoc(
@@ -33,9 +41,14 @@ class ProgressRecord {
       status: _statusFromString(data['status'] as String? ?? 'locked'),
       starsEarned: (data['starsEarned'] as num?)?.toInt() ?? 0,
       bestScore: (data['bestScore'] as num?)?.toInt() ?? 0,
+      totalQuestions: (data['totalQuestions'] as num?)?.toInt() ?? 0,
       attempts: (data['attempts'] as num?)?.toInt() ?? 0,
       lastPlayedAt: data['lastPlayedAt'] as Timestamp?,
       completedAt: data['completedAt'] as Timestamp?,
+      lastDurationSeconds: (data['lastDurationSeconds'] as num?)?.toInt() ?? 0,
+      lastHintsUsed: (data['lastHintsUsed'] as num?)?.toInt() ?? 0,
+      fastestDurationSeconds:
+          (data['fastestDurationSeconds'] as num?)?.toInt() ?? 0,
     );
   }
 
@@ -45,9 +58,13 @@ class ProgressRecord {
       'status': status.name,
       'starsEarned': starsEarned,
       'bestScore': bestScore,
+      'totalQuestions': totalQuestions,
       'attempts': attempts,
       'lastPlayedAt': lastPlayedAt,
       'completedAt': completedAt,
+      'lastDurationSeconds': lastDurationSeconds,
+      'lastHintsUsed': lastHintsUsed,
+      'fastestDurationSeconds': fastestDurationSeconds,
       'updatedAt': FieldValue.serverTimestamp(),
     };
   }
@@ -56,9 +73,13 @@ class ProgressRecord {
     LessonPlayStatus? status,
     int? starsEarned,
     int? bestScore,
+    int? totalQuestions,
     int? attempts,
     Timestamp? lastPlayedAt,
     Timestamp? completedAt,
+    int? lastDurationSeconds,
+    int? lastHintsUsed,
+    int? fastestDurationSeconds,
   }) {
     return ProgressRecord(
       id: id,
@@ -66,9 +87,14 @@ class ProgressRecord {
       status: status ?? this.status,
       starsEarned: starsEarned ?? this.starsEarned,
       bestScore: bestScore ?? this.bestScore,
+      totalQuestions: totalQuestions ?? this.totalQuestions,
       attempts: attempts ?? this.attempts,
       lastPlayedAt: lastPlayedAt ?? this.lastPlayedAt,
       completedAt: completedAt ?? this.completedAt,
+      lastDurationSeconds: lastDurationSeconds ?? this.lastDurationSeconds,
+      lastHintsUsed: lastHintsUsed ?? this.lastHintsUsed,
+      fastestDurationSeconds:
+          fastestDurationSeconds ?? this.fastestDurationSeconds,
     );
   }
 

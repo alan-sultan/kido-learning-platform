@@ -48,6 +48,7 @@ class QuizQuestion {
   final List<QuizOption> options;
   final int correctIndex;
   final String illustration;
+  final String hint;
 
   const QuizQuestion({
     required this.id,
@@ -55,6 +56,7 @@ class QuizQuestion {
     required this.options,
     required this.correctIndex,
     required this.illustration,
+    this.hint = '',
   });
 
   factory QuizQuestion.fromDoc(DocumentSnapshot<Map<String, dynamic>> doc) {
@@ -68,6 +70,7 @@ class QuizQuestion {
           .toList(),
       correctIndex: (data['correctIndex'] as num?)?.toInt() ?? 0,
       illustration: data['illustration'] as String? ?? 'default',
+      hint: data['hint'] as String? ?? '',
     );
   }
 
@@ -77,6 +80,7 @@ class QuizQuestion {
       'options': options.map((o) => o.toMap()).toList(),
       'correctIndex': correctIndex,
       'illustration': illustration,
+      'hint': hint,
       'updatedAt': FieldValue.serverTimestamp(),
     };
   }

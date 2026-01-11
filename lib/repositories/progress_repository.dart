@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../models/progress_record.dart';
@@ -83,4 +85,82 @@ class ProgressRepository {
       'updatedAt': FieldValue.serverTimestamp(),
     }, SetOptions(merge: true));
   }
+
+  Future<QuizProgressResult> recordQuizResult({
+    required String userId,
+    required String childId,
+    required String lessonId,
+    required int correctAnswers,
+    required int totalQuestions,
+    int starsEarned = 0,
+    int timeSpentSeconds = 0,
+    int hintsUsed = 0,
+  }) async {
+    final existing = await fetchLessonProgress(userId, childId, lessonId);
+    final bestScore = math.max(existing?.bestScore ?? 0, correctAnswers);
+    final improvedBestScore = bestScore > (existing?.bestScore ?? 0);
+    final attempts = (existing?.attempts ?? 0) + 1;
+    final totalStars = (existing?.starsEarned ?? 0) + starsEarned;
+    final previousFastest = existing?.fastestDurationSeconds ?? 0;
+    var fastestDuration = previousFastest;
+    var improvedFastestTime = false;
+    if (timeSpentSeconds > 0) {
+      if (fastestDuration == 0 || timeSpentSeconds < fastestDuration) {
+        fastestDuration = timeSpentSeconds;
+        improvedFastestTime = true;
+      }
+    }
+
+    await _progressRef(userId, childId).doc(lessonId).set({
+      'lessonId': lessonId,
+      'status': LessonPlayStatus.completed.name,
+      'starsEarned': totalStars,
+      'bestScore': bestScore,
+      'attempts': attempts,
+      'lastPlayedAt': FieldValue.serverTimestamp(),
+      'completedAt': FieldValue.serverTimestamp(),
+      'totalQuestions': totalQuestions,
+      'lastDurationSeconds': timeSpentSeconds,
+      'lastHintsUsed': hintsUsed,
+      'fastestDurationSeconds': fastestDuration,
+      'updatedAt': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
+
+    return QuizProgressResult(
+      totalStars: totalStars,
+      bestScore: bestScore,
+      fastestDurationSeconds: fastestDuration,
+      improvedBestScore: improvedBestScore,
+      improvedFastestTime: improvedFastestTime,
+    );
+  }
+
+  Future<void> markQuizInProgress({
+    required String userId,
+    required String childId,
+    required String lessonId,
+  }) async {
+    await _progressRef(userId, childId).doc(lessonId).set({
+      'lessonId': lessonId,
+      'status': LessonPlayStatus.inProgress.name,
+      'lastPlayedAt': FieldValue.serverTimestamp(),
+      'updatedAt': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
+  }
+}
+
+class QuizProgressResult {
+  const QuizProgressResult({
+    required this.totalStars,
+    required this.bestScore,
+    required this.fastestDurationSeconds,
+    required this.improvedBestScore,
+    required this.improvedFastestTime,
+  });
+
+  final int totalStars;
+  final int bestScore;
+  final int fastestDurationSeconds;
+  final bool improvedBestScore;
+  final bool improvedFastestTime;
 }
