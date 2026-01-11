@@ -82,7 +82,7 @@ class WelcomeScreen extends StatelessWidget {
                             color: const Color(0xFFFF9800),
                             borderRadius: BorderRadius.circular(20),
                           ),
-                          child: Row(
+                          child: const Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Icon(
@@ -90,8 +90,8 @@ class WelcomeScreen extends StatelessWidget {
                                 size: 16,
                                 color: Colors.white,
                               ),
-                              const SizedBox(width: 4),
-                              const Text(
+                              SizedBox(width: 4),
+                              Text(
                                 'FUN!',
                                 style: TextStyle(
                                   fontSize: 12,
@@ -213,7 +213,7 @@ class WelcomeScreen extends StatelessWidget {
                             borderRadius: BorderRadius.circular(25),
                           ),
                         ),
-                        child: Row(
+                        child: const Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Icon(
@@ -221,8 +221,8 @@ class WelcomeScreen extends StatelessWidget {
                               color: Colors.white,
                               size: 28,
                             ),
-                            const SizedBox(width: 8),
-                            const Text(
+                            SizedBox(width: 8),
+                            Text(
                               "Let's Play!",
                               style: TextStyle(
                                 fontSize: 18,
@@ -248,7 +248,7 @@ class WelcomeScreen extends StatelessWidget {
                     ),
                   );
                 },
-                icon: Icon(
+                icon: const Icon(
                   Icons.lock,
                   size: 16,
                   color: Colors.black87,
@@ -393,4 +393,3 @@ class ChildCharacterPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
-

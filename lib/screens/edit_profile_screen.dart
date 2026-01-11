@@ -1,25 +1,31 @@
 import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
+import '../models/child_profile.dart';
+import '../services/app_services.dart';
+
 class EditProfileScreen extends StatefulWidget {
-  const EditProfileScreen({super.key});
+  const EditProfileScreen({super.key, this.profile});
+
+  final ChildProfile? profile;
 
   @override
   State<EditProfileScreen> createState() => _EditProfileScreenState();
 }
 
 class _EditProfileScreenState extends State<EditProfileScreen> {
-  final _nameController = TextEditingController(text: 'Timmy');
-  int _selectedCharacterIndex = 0;
+  late final TextEditingController _nameController;
+  late String _selectedAvatarKey;
+  bool _isSaving = false;
 
-  final List<CharacterData> _characters = [
-    CharacterData('Bear', Colors.brown),
-    CharacterData('Bunny', Colors.white),
-    CharacterData('Fox', Colors.red),
-    CharacterData('Alien', Colors.lightBlue),
-    CharacterData('Monster', Colors.green),
-    CharacterData('Add', Colors.grey),
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _nameController = TextEditingController(text: widget.profile?.name ?? '');
+    _selectedAvatarKey =
+        widget.profile?.avatarKey ?? ChildProfile.defaultAvatars.first;
+  }
 
   @override
   void dispose() {
@@ -29,6 +35,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isNewProfile = widget.profile == null;
     return Scaffold(
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
@@ -36,11 +43,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () => Navigator.pop(context),
+          onPressed: _isSaving ? null : () => Navigator.pop(context),
         ),
-        title: const Text(
-          'Edit Profile',
-          style: TextStyle(
+        title: Text(
+          isNewProfile ? 'Create Profile' : 'Edit Profile',
+          style: const TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
             color: Colors.black,
@@ -48,13 +55,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: _isSaving ? null : () => Navigator.pop(context),
             child: Text(
               'Cancel',
-              style: TextStyle(
-                fontSize: 16,
-                color: Colors.grey[600],
-              ),
+              style: TextStyle(fontSize: 16, color: Colors.grey[600]),
             ),
           ),
         ],
@@ -64,157 +68,37 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24),
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 const SizedBox(height: 30),
-                // Profile picture editor
-                Column(
-                  children: [
-                    Stack(
-                      children: [
-                        Container(
-                          width: 120,
-                          height: 120,
-                          decoration: BoxDecoration(
-                            color: _characters[_selectedCharacterIndex].color,
-                            shape: BoxShape.circle,
-                          ),
-                          child: _selectedCharacterIndex == 0
-                              ? CustomPaint(
-                                  size: const Size(120, 120),
-                                  painter: BearAvatarPainter(),
-                                )
-                              : Center(
-                                  child: Icon(
-                                    Icons.person,
-                                    size: 60,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      'Tap to change photo',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.grey[600],
-                      ),
-                    ),
-                  ],
-                ),
+                _buildPreviewCard(),
                 const SizedBox(height: 40),
-                // Name input
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    "What is your name?",
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.black,
-                    ),
+                const Text(
+                  "What's your explorer's name?",
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.black,
                   ),
                 ),
                 const SizedBox(height: 12),
-                Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(15),
-                    border: Border.all(color: Colors.grey[300]!),
-                  ),
-                  child: TextField(
-                    controller: _nameController,
-                    decoration: InputDecoration(
-                      hintText: 'Enter your name',
-                      hintStyle: TextStyle(color: Colors.grey[400]),
-                      border: InputBorder.none,
-                      suffixIcon: Icon(
-                        Icons.check_circle,
-                        color: Colors.amber[700],
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 20,
-                        vertical: 16,
-                      ),
-                    ),
-                  ),
-                ),
+                _buildNameField(),
                 const SizedBox(height: 40),
-                // Character selection
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    "Pick your character!",
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.black,
-                    ),
+                const Text(
+                  'Pick an avatar',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.black,
                   ),
                 ),
                 const SizedBox(height: 16),
-                // Character grid
-                GridView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 3,
-                    crossAxisSpacing: 16,
-                    mainAxisSpacing: 16,
-                    childAspectRatio: 1,
-                  ),
-                  itemCount: _characters.length,
-                  itemBuilder: (context, index) {
-                    final character = _characters[index];
-                    final isSelected = index == _selectedCharacterIndex;
-                    final isAddButton = index == _characters.length - 1;
-
-                    return GestureDetector(
-                      onTap: () {
-                        setState(() {
-                          _selectedCharacterIndex = index;
-                        });
-                      },
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: isAddButton ? Colors.grey[200] : character.color,
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: isSelected ? Colors.amber[700]! : Colors.transparent,
-                            width: 3,
-                          ),
-                        ),
-                        child: isAddButton
-                            ? Icon(
-                                Icons.add,
-                                size: 40,
-                                color: Colors.grey[600],
-                              )
-                            : index == 0
-                                ? CustomPaint(
-                                    size: const Size(80, 80),
-                                    painter: BearAvatarPainter(),
-                                  )
-                                : Center(
-                                    child: Icon(
-                                      Icons.person,
-                                      size: 40,
-                                      color: Colors.white,
-                                    ),
-                                  ),
-                      ),
-                    );
-                  },
-                ),
+                _buildAvatarGrid(),
                 const SizedBox(height: 40),
-                // Save button
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
-                    onPressed: () {
-                      Navigator.pop(context);
-                    },
+                    onPressed: _isSaving ? null : _handleSave,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.amber[700],
                       padding: const EdgeInsets.symmetric(vertical: 16),
@@ -222,24 +106,31 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         borderRadius: BorderRadius.circular(15),
                       ),
                     ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.check_circle,
-                          color: Colors.black,
-                        ),
-                        const SizedBox(width: 8),
-                        const Text(
-                          'Save Changes',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black,
+                    child: _isSaving
+                        ? const SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor:
+                                  AlwaysStoppedAnimation<Color>(Colors.black),
+                            ),
+                          )
+                        : const Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.check_circle, color: Colors.black),
+                              SizedBox(width: 8),
+                              Text(
+                                'Save Profile',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.black,
+                                ),
+                              ),
+                            ],
                           ),
-                        ),
-                      ],
-                    ),
                   ),
                 ),
                 const SizedBox(height: 30),
@@ -250,82 +141,260 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       ),
     );
   }
+
+  Widget _buildPreviewCard() {
+    final bgColor = _avatarColor(_selectedAvatarKey);
+    return Column(
+      children: [
+        Container(
+          width: 140,
+          height: 140,
+          decoration: BoxDecoration(
+            color: bgColor.withAlpha(60),
+            shape: BoxShape.circle,
+            border: Border.all(color: bgColor, width: 4),
+          ),
+          child: const Padding(
+            padding: EdgeInsets.all(16),
+            child: CustomPaint(
+              painter: _ExplorerAvatarPainter(),
+            ),
+          ),
+        ),
+        const SizedBox(height: 12),
+        Text(
+          _selectedAvatarKey.toUpperCase(),
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.bold,
+            color: bgColor.darken(),
+            letterSpacing: 1,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildNameField() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(15),
+        border: Border.all(color: Colors.grey[300]!),
+      ),
+      child: TextField(
+        controller: _nameController,
+        maxLength: 18,
+        decoration: InputDecoration(
+          counterText: '',
+          hintText: 'Explorer name',
+          hintStyle: TextStyle(color: Colors.grey[400]),
+          border: InputBorder.none,
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 20,
+            vertical: 16,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAvatarGrid() {
+    const avatars = ChildProfile.defaultAvatars;
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 3,
+        crossAxisSpacing: 16,
+        mainAxisSpacing: 16,
+        childAspectRatio: 1,
+      ),
+      itemCount: avatars.length,
+      itemBuilder: (context, index) {
+        final avatarKey = avatars[index];
+        final isSelected = avatarKey == _selectedAvatarKey;
+        final color = _avatarColor(avatarKey);
+        return GestureDetector(
+          onTap: () {
+            setState(() {
+              _selectedAvatarKey = avatarKey;
+            });
+          },
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            decoration: BoxDecoration(
+              color: color.withAlpha(40),
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: isSelected ? color : Colors.transparent,
+                width: 3,
+              ),
+            ),
+            child: Center(
+              child: Text(
+                avatarKey.substring(0, 1).toUpperCase(),
+                style: TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.bold,
+                  color: color.darken(),
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _handleSave() async {
+    final name = _nameController.text.trim();
+    if (name.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please enter a name for your explorer'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    final user = AppServices.auth.currentUser;
+    if (user == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please sign in to update profiles'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    setState(() {
+      _isSaving = true;
+    });
+
+    final repository = AppServices.childProfiles;
+    try {
+      if (widget.profile == null) {
+        final newProfile = ChildProfile(
+          id: repository.newProfileId(user.uid),
+          name: name,
+          avatarKey: _selectedAvatarKey,
+          level: 1,
+          stars: 0,
+          streak: 0,
+          totalLessons: 0,
+          totalQuizzes: 0,
+          badges: const <String>[],
+          birthday: null,
+        );
+        await repository.createProfile(user.uid, newProfile);
+      } else {
+        final updated = widget.profile!.copyWith(
+          name: name,
+          avatarKey: _selectedAvatarKey,
+        );
+        await repository.updateProfile(user.uid, updated);
+      }
+
+      if (mounted) Navigator.pop(context);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.toString()),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSaving = false;
+        });
+      }
+    }
+  }
+
+  Color _avatarColor(String key) {
+    switch (key) {
+      case 'bunny':
+        return Colors.pink[200]!;
+      case 'fox':
+        return Colors.deepOrange;
+      case 'alien':
+        return Colors.lightBlue;
+      case 'monster':
+        return Colors.purple;
+      case 'bear':
+      default:
+        return Colors.orange;
+    }
+  }
 }
 
-class CharacterData {
-  final String name;
-  final Color color;
+class _ExplorerAvatarPainter extends CustomPainter {
+  const _ExplorerAvatarPainter();
 
-  CharacterData(this.name, this.color);
-}
-
-class BearAvatarPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final center = Offset(size.width / 2, size.height / 2);
 
-    // Body (brown circle)
-    final bodyPaint = Paint()..color = const Color(0xFF8B4513);
-    canvas.drawCircle(center, size.width * 0.4, bodyPaint);
+    final headPaint = Paint()..color = const Color(0xFFD4A574);
+    canvas.drawCircle(center, size.width * 0.45, headPaint);
 
-    // Head (slightly smaller brown circle)
-    canvas.drawCircle(
-      Offset(center.dx, center.dy - size.width * 0.15),
-      size.width * 0.35,
-      bodyPaint,
+    final hairPaint = Paint()..color = const Color(0xFF8B4513);
+    final hairPath = Path();
+    hairPath.addArc(
+      Rect.fromCenter(
+        center: Offset(center.dx, center.dy - size.height * 0.1),
+        width: size.width * 0.9,
+        height: size.width * 0.5,
+      ),
+      math.pi,
+      math.pi,
     );
+    canvas.drawPath(hairPath, hairPaint);
 
-    // Ears
-    canvas.drawCircle(
-      Offset(center.dx - size.width * 0.2, center.dy - size.width * 0.3),
-      size.width * 0.12,
-      bodyPaint,
-    );
-    canvas.drawCircle(
-      Offset(center.dx + size.width * 0.2, center.dy - size.width * 0.3),
-      size.width * 0.12,
-      bodyPaint,
-    );
-
-    // Eyes
     final eyePaint = Paint()..color = Colors.black;
     canvas.drawCircle(
-      Offset(center.dx - size.width * 0.1, center.dy - size.width * 0.15),
-      size.width * 0.04,
+      Offset(center.dx - size.width * 0.18, center.dy - size.height * 0.05),
+      size.width * 0.06,
       eyePaint,
     );
     canvas.drawCircle(
-      Offset(center.dx + size.width * 0.1, center.dy - size.width * 0.15),
-      size.width * 0.04,
+      Offset(center.dx + size.width * 0.18, center.dy - size.height * 0.05),
+      size.width * 0.06,
       eyePaint,
     );
 
-    // Nose
-    canvas.drawCircle(
-      Offset(center.dx, center.dy - size.width * 0.05),
-      size.width * 0.03,
-      eyePaint,
-    );
-
-    // Mouth (smile)
-    final mouthPath = Path();
-    mouthPath.addArc(
+    final smilePath = Path();
+    smilePath.addArc(
       Rect.fromCenter(
-        center: Offset(center.dx, center.dy),
-        width: size.width * 0.2,
-        height: size.width * 0.15,
+        center: Offset(center.dx, center.dy + size.height * 0.1),
+        width: size.width * 0.4,
+        height: size.width * 0.25,
       ),
       0,
       math.pi,
     );
-    final mouthPaint = Paint()
+    final smilePaint = Paint()
       ..color = Colors.black
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 2;
-    canvas.drawPath(mouthPath, mouthPaint);
+      ..strokeWidth = 3;
+    canvas.drawPath(smilePath, smilePaint);
   }
 
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
+extension on Color {
+  Color darken([double amount = .2]) {
+    final hsl = HSLColor.fromColor(this);
+    final adjusted =
+        hsl.withLightness((hsl.lightness - amount).clamp(0.0, 1.0));
+    return adjusted.toColor();
+  }
+}

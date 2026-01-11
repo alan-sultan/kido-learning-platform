@@ -1,30 +1,8 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
-import 'welcome_screen.dart';
 
-class SplashScreen extends StatefulWidget {
+class SplashScreen extends StatelessWidget {
   const SplashScreen({super.key});
-
-  @override
-  State<SplashScreen> createState() => _SplashScreenState();
-}
-
-class _SplashScreenState extends State<SplashScreen> {
-  @override
-  void initState() {
-    super.initState();
-    _navigateToWelcome();
-  }
-
-  _navigateToWelcome() async {
-    await Future.delayed(const Duration(seconds: 3));
-    if (mounted) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const WelcomeScreen()),
-      );
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -79,7 +57,7 @@ class _SplashScreenState extends State<SplashScreen> {
                 Container(
                   width: 200,
                   height: 200,
-                  decoration: BoxDecoration(
+                  decoration: const BoxDecoration(
                     color: Colors.white,
                     shape: BoxShape.circle,
                   ),
@@ -104,10 +82,10 @@ class _SplashScreenState extends State<SplashScreen> {
                       const SizedBox(height: 8),
                       ClipRRect(
                         borderRadius: BorderRadius.circular(10),
-                        child: LinearProgressIndicator(
+                        child: const LinearProgressIndicator(
                           minHeight: 8,
                           backgroundColor: Colors.white,
-                          valueColor: const AlwaysStoppedAnimation<Color>(
+                          valueColor: AlwaysStoppedAnimation<Color>(
                             Color(0xFFFF69B4),
                           ),
                           value: 0.6,
@@ -330,5 +308,3 @@ class BearPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
-
-

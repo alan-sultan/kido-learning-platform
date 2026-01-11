@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'login_screen.dart';
-import 'home_screen.dart';
+import '../services/app_services.dart';
+import '../services/navigation_service.dart';
 
 class SocialLoginScreen extends StatefulWidget {
   const SocialLoginScreen({super.key});
@@ -10,6 +11,9 @@ class SocialLoginScreen extends StatefulWidget {
 }
 
 class _SocialLoginScreenState extends State<SocialLoginScreen> {
+  final _authService = AppServices.auth;
+  bool _isLoading = false;
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -21,9 +25,9 @@ class _SocialLoginScreenState extends State<SocialLoginScreen> {
           icon: const Icon(Icons.arrow_back, color: Colors.black),
           onPressed: () => Navigator.pop(context),
         ),
-        actions: [
+        actions: const [
           Padding(
-            padding: const EdgeInsets.only(right: 16),
+            padding: EdgeInsets.only(right: 16),
             child: Center(
               child: Text(
                 'LOGIN',
@@ -55,14 +59,14 @@ class _SocialLoginScreenState extends State<SocialLoginScreen> {
                     child: Column(
                       children: [
                         // Owl illustration
-                        Container(
+                        SizedBox(
                           width: 200,
                           height: 200,
                           child: Stack(
                             alignment: Alignment.center,
                             children: [
-                              CustomPaint(
-                                size: const Size(200, 200),
+                              const CustomPaint(
+                                size: Size(200, 200),
                                 painter: OwlCharacterPainter(),
                               ),
                               // Kids Mode tag
@@ -115,7 +119,7 @@ class _SocialLoginScreenState extends State<SocialLoginScreen> {
                         SizedBox(
                           width: double.infinity,
                           child: ElevatedButton(
-                            onPressed: () => _handleGoogleLogin(context),
+                            onPressed: _isLoading ? null : _handleGoogleLogin,
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.amber[700],
                               padding: const EdgeInsets.symmetric(vertical: 16),
@@ -129,7 +133,7 @@ class _SocialLoginScreenState extends State<SocialLoginScreen> {
                                 Container(
                                   width: 24,
                                   height: 24,
-                                  decoration: BoxDecoration(
+                                  decoration: const BoxDecoration(
                                     color: Colors.white,
                                     shape: BoxShape.circle,
                                   ),
@@ -178,15 +182,15 @@ class _SocialLoginScreenState extends State<SocialLoginScreen> {
                               ),
                               side: BorderSide(color: Colors.grey[300]!),
                             ),
-                            child: Row(
+                            child: const Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 Icon(
                                   Icons.email_outlined,
                                   color: Colors.black87,
                                 ),
-                                const SizedBox(width: 12),
-                                const Text(
+                                SizedBox(width: 12),
+                                Text(
                                   'Continue with Email',
                                   style: TextStyle(
                                     fontSize: 16,
@@ -199,17 +203,6 @@ class _SocialLoginScreenState extends State<SocialLoginScreen> {
                           ),
                         ),
                         const SizedBox(height: 24),
-                        // Guest option
-                        TextButton(
-                          onPressed: () => _handleGuestLogin(context),
-                          child: Text(
-                            'Continue as Guest',
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: Colors.grey[600],
-                            ),
-                          ),
-                        ),
                       ],
                     ),
                   ),
@@ -232,42 +225,67 @@ class _SocialLoginScreenState extends State<SocialLoginScreen> {
     );
   }
 
-  void _handleGoogleLogin(BuildContext context) async {
-    // Simulate Google login
-    await Future.delayed(const Duration(seconds: 1));
-    if (mounted) {
-      Navigator.pushAndRemoveUntil(
-        context,
-        MaterialPageRoute(builder: (context) => const HomeScreen()),
-        (route) => false,
-      );
+  void _handleGoogleLogin() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final credential = await _authService.signInWithGoogle();
+      final user = credential?.user ?? _authService.currentUser;
+      final successMessage =
+          'Signed in as ${user?.email ?? user?.displayName ?? 'your Google account'}';
+
+      if (user != null) {
+        _handleAuthSuccess(successMessage);
+      } else if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+                'We could not confirm your Google session. Please try again.'),
+            backgroundColor: Colors.red,
+            duration: Duration(seconds: 3),
+          ),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _isLoading = false;
+      });
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Signed in with Google successfully!'),
-          backgroundColor: Colors.green,
-          duration: Duration(seconds: 2),
+        SnackBar(
+          content: Text(e.toString()),
+          backgroundColor: Colors.red,
+          duration: const Duration(seconds: 3),
         ),
       );
     }
   }
 
-  void _handleGuestLogin(BuildContext context) {
-    Navigator.pushAndRemoveUntil(
-      context,
-      MaterialPageRoute(builder: (context) => const HomeScreen()),
-      (route) => false,
-    );
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Continuing as guest'),
-        backgroundColor: Colors.blue,
-        duration: Duration(seconds: 2),
+  void _handleAuthSuccess(String message) {
+    if (mounted) {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+
+    NavigationService.popToRoot();
+    NavigationService.showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.green,
+        duration: const Duration(seconds: 2),
       ),
     );
   }
 }
 
 class OwlCharacterPainter extends CustomPainter {
+  const OwlCharacterPainter();
   @override
   void paint(Canvas canvas, Size size) {
     final center = Offset(size.width / 2, size.height / 2);
@@ -298,7 +316,8 @@ class OwlCharacterPainter extends CustomPainter {
     // Left lens
     canvas.drawOval(
       Rect.fromCenter(
-        center: Offset(center.dx - size.width * 0.15, center.dy - size.height * 0.2),
+        center: Offset(
+            center.dx - size.width * 0.15, center.dy - size.height * 0.2),
         width: size.width * 0.25,
         height: size.width * 0.2,
       ),
@@ -307,7 +326,8 @@ class OwlCharacterPainter extends CustomPainter {
     // Right lens
     canvas.drawOval(
       Rect.fromCenter(
-        center: Offset(center.dx + size.width * 0.15, center.dy - size.height * 0.2),
+        center: Offset(
+            center.dx + size.width * 0.15, center.dy - size.height * 0.2),
         width: size.width * 0.25,
         height: size.width * 0.2,
       ),
@@ -348,8 +368,10 @@ class OwlCharacterPainter extends CustomPainter {
     final beakPaint = Paint()..color = const Color(0xFFFFA500);
     final beakPath = Path();
     beakPath.moveTo(center.dx, center.dy - size.height * 0.05);
-    beakPath.lineTo(center.dx - size.width * 0.05, center.dy + size.height * 0.05);
-    beakPath.lineTo(center.dx + size.width * 0.05, center.dy + size.height * 0.05);
+    beakPath.lineTo(
+        center.dx - size.width * 0.05, center.dy + size.height * 0.05);
+    beakPath.lineTo(
+        center.dx + size.width * 0.05, center.dy + size.height * 0.05);
     beakPath.close();
     canvas.drawPath(beakPath, beakPaint);
 
@@ -367,7 +389,6 @@ class OwlCharacterPainter extends CustomPainter {
       bookPaint,
     );
     // Book pages (white)
-    final pagePaint = Paint()..color = Colors.white;
     canvas.drawLine(
       Offset(center.dx, center.dy + size.height * 0.15),
       Offset(center.dx, center.dy + size.height * 0.35),
@@ -380,4 +401,3 @@ class OwlCharacterPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
-

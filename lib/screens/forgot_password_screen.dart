@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'login_screen.dart';
+import '../services/app_services.dart';
 
 class ForgotPasswordScreen extends StatefulWidget {
   const ForgotPasswordScreen({super.key});
@@ -11,6 +12,7 @@ class ForgotPasswordScreen extends StatefulWidget {
 class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   final _emailController = TextEditingController();
   bool _isLoading = false;
+  final _authService = AppServices.auth;
 
   @override
   void dispose() {
@@ -66,8 +68,8 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                           child: Stack(
                             alignment: Alignment.center,
                             children: [
-                              CustomPaint(
-                                size: const Size(150, 150),
+                              const CustomPaint(
+                                size: Size(150, 150),
                                 painter: ChickCharacterPainter(),
                               ),
                               // Question mark
@@ -76,7 +78,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                                 child: Container(
                                   width: 40,
                                   height: 40,
-                                  decoration: BoxDecoration(
+                                  decoration: const BoxDecoration(
                                     color: Colors.white,
                                     shape: BoxShape.circle,
                                   ),
@@ -126,7 +128,8 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                           child: TextField(
                             controller: _emailController,
                             decoration: InputDecoration(
-                              prefixIcon: Icon(Icons.email_outlined, color: Colors.grey[600]),
+                              prefixIcon: Icon(Icons.email_outlined,
+                                  color: Colors.grey[600]),
                               hintText: 'Enter email here...',
                               hintStyle: TextStyle(color: Colors.grey[400]),
                               border: InputBorder.none,
@@ -156,12 +159,13 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                                     width: 20,
                                     child: CircularProgressIndicator(
                                       strokeWidth: 2,
-                                      valueColor: AlwaysStoppedAnimation<Color>(Colors.black),
+                                      valueColor: AlwaysStoppedAnimation<Color>(
+                                          Colors.black),
                                     ),
                                   )
-                                : Row(
+                                : const Row(
                                     mainAxisAlignment: MainAxisAlignment.center,
-                                    children: const [
+                                    children: [
                                       Text(
                                         'Send Magic Link ',
                                         style: TextStyle(
@@ -236,25 +240,41 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       _isLoading = true;
     });
 
-    // Simulate API call
-    await Future.delayed(const Duration(seconds: 1));
+    try {
+      await _authService.sendPasswordResetEmail(_emailController.text.trim());
 
-    if (mounted) {
-      setState(() {
-        _isLoading = false;
-      });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Magic link sent to ${_emailController.text.trim()}! (Demo mode)'),
-          backgroundColor: Colors.green,
-          duration: const Duration(seconds: 3),
-        ),
-      );
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+                'Password reset email sent to ${_emailController.text.trim()}!'),
+            backgroundColor: Colors.green,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.toString()),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
     }
   }
 }
 
 class ChickCharacterPainter extends CustomPainter {
+  const ChickCharacterPainter();
   @override
   void paint(Canvas canvas, Size size) {
     final center = Offset(size.width / 2, size.height / 2);
@@ -273,11 +293,15 @@ class ChickCharacterPainter extends CustomPainter {
     // Crown
     final crownPaint = Paint()..color = Colors.amber[700]!;
     final crownPath = Path();
-    crownPath.moveTo(center.dx - size.width * 0.15, center.dy - size.height * 0.3);
-    crownPath.lineTo(center.dx - size.width * 0.1, center.dy - size.height * 0.4);
+    crownPath.moveTo(
+        center.dx - size.width * 0.15, center.dy - size.height * 0.3);
+    crownPath.lineTo(
+        center.dx - size.width * 0.1, center.dy - size.height * 0.4);
     crownPath.lineTo(center.dx, center.dy - size.height * 0.35);
-    crownPath.lineTo(center.dx + size.width * 0.1, center.dy - size.height * 0.4);
-    crownPath.lineTo(center.dx + size.width * 0.15, center.dy - size.height * 0.3);
+    crownPath.lineTo(
+        center.dx + size.width * 0.1, center.dy - size.height * 0.4);
+    crownPath.lineTo(
+        center.dx + size.width * 0.15, center.dy - size.height * 0.3);
     crownPath.close();
     canvas.drawPath(crownPath, crownPaint);
 
@@ -298,8 +322,10 @@ class ChickCharacterPainter extends CustomPainter {
     final beakPaint = Paint()..color = const Color(0xFFFFA500);
     final beakPath = Path();
     beakPath.moveTo(center.dx, center.dy - size.height * 0.05);
-    beakPath.lineTo(center.dx - size.width * 0.05, center.dy + size.height * 0.05);
-    beakPath.lineTo(center.dx + size.width * 0.05, center.dy + size.height * 0.05);
+    beakPath.lineTo(
+        center.dx - size.width * 0.05, center.dy + size.height * 0.05);
+    beakPath.lineTo(
+        center.dx + size.width * 0.05, center.dy + size.height * 0.05);
     beakPath.close();
     canvas.drawPath(beakPath, beakPaint);
 
@@ -325,4 +351,3 @@ class ChickCharacterPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
-

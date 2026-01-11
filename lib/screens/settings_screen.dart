@@ -1,5 +1,10 @@
 import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
+
+import '../services/app_services.dart';
+import '../services/navigation_service.dart';
+import '../services/preferences_service.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -12,6 +17,90 @@ class _SettingsScreenState extends State<SettingsScreen> {
   bool _musicEnabled = true;
   bool _soundsEnabled = true;
   String _selectedTheme = 'Sunny';
+  bool _loadingPrefs = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadPreferences();
+  }
+
+  Future<void> _loadPreferences() async {
+    try {
+      final prefs = await PreferencesService.instance.getPreferences();
+      if (!mounted) return;
+      setState(() {
+        _musicEnabled = prefs.musicEnabled;
+        _soundsEnabled = prefs.soundsEnabled;
+        _selectedTheme = prefs.theme;
+        _loadingPrefs = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _loadingPrefs = false;
+      });
+      NavigationService.showSnackBar(
+        SnackBar(
+          content: Text('Could not load settings: ${e.toString()}'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  Future<void> _updatePreferences({
+    bool? musicEnabled,
+    bool? soundsEnabled,
+    String? theme,
+  }) async {
+    if (_loadingPrefs) return;
+
+    final lastState = (
+      music: _musicEnabled,
+      sounds: _soundsEnabled,
+      theme: _selectedTheme,
+    );
+
+    setState(() {
+      if (musicEnabled != null) {
+        _musicEnabled = musicEnabled;
+      }
+      if (soundsEnabled != null) {
+        _soundsEnabled = soundsEnabled;
+      }
+      if (theme != null) {
+        _selectedTheme = theme;
+      }
+    });
+
+    try {
+      final snapshot = await PreferencesService.instance.updatePreferences(
+        musicEnabled: musicEnabled,
+        soundsEnabled: soundsEnabled,
+        theme: theme,
+      );
+      if (!mounted) return;
+      setState(() {
+        _musicEnabled = snapshot.musicEnabled;
+        _soundsEnabled = snapshot.soundsEnabled;
+        _selectedTheme = snapshot.theme;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _musicEnabled = lastState.music;
+        _soundsEnabled = lastState.sounds;
+        _selectedTheme = lastState.theme;
+      });
+      NavigationService.showSnackBar(
+        SnackBar(
+          content: Text('Could not save settings: ${e.toString()}'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -102,12 +191,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           ),
                           Switch(
                             value: _musicEnabled,
-                            onChanged: (value) {
-                              setState(() {
-                                _musicEnabled = value;
-                              });
-                            },
-                            activeColor: Colors.amber[700],
+                            onChanged: _loadingPrefs
+                                ? null
+                                : (value) => _updatePreferences(
+                                      musicEnabled: value,
+                                    ),
+                            thumbColor:
+                                WidgetStatePropertyAll(Colors.amber[700]),
                           ),
                         ],
                       ),
@@ -162,12 +252,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           ),
                           Switch(
                             value: _soundsEnabled,
-                            onChanged: (value) {
-                              setState(() {
-                                _soundsEnabled = value;
-                              });
-                            },
-                            activeColor: Colors.amber[700],
+                            onChanged: _loadingPrefs
+                                ? null
+                                : (value) => _updatePreferences(
+                                      soundsEnabled: value,
+                                    ),
+                            thumbColor:
+                                WidgetStatePropertyAll(Colors.amber[700]),
                           ),
                         ],
                       ),
@@ -191,11 +282,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             Colors.amber[700]!,
                             Icons.wb_sunny,
                             isSelected: _selectedTheme == 'Sunny',
-                            onTap: () {
-                              setState(() {
-                                _selectedTheme = 'Sunny';
-                              });
-                            },
+                            onTap: _loadingPrefs
+                                ? null
+                                : () => _updatePreferences(theme: 'Sunny'),
                           ),
                         ),
                         const SizedBox(width: 16),
@@ -205,11 +294,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             Colors.purple[700]!,
                             Icons.rocket_launch,
                             isSelected: _selectedTheme == 'Space',
-                            onTap: () {
-                              setState(() {
-                                _selectedTheme = 'Space';
-                              });
-                            },
+                            onTap: _loadingPrefs
+                                ? null
+                                : () => _updatePreferences(theme: 'Space'),
                           ),
                         ),
                       ],
@@ -243,6 +330,28 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         ],
                       ),
                     ),
+                    const SizedBox(height: 20),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: _handleSignOut,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.red[400],
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(15),
+                          ),
+                        ),
+                        child: const Text(
+                          'Sign Out',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
                     const SizedBox(height: 100), // Space for bear character
                   ],
                 ),
@@ -272,7 +381,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     Color color,
     IconData icon, {
     required bool isSelected,
-    required VoidCallback onTap,
+    VoidCallback? onTap,
   }) {
     return GestureDetector(
       onTap: onTap,
@@ -300,7 +409,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
             if (isSelected) ...[
               const SizedBox(height: 8),
-              Icon(
+              const Icon(
                 Icons.check_circle,
                 color: Colors.white,
                 size: 24,
@@ -310,6 +419,28 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ),
       ),
     );
+  }
+
+  Future<void> _handleSignOut() async {
+    try {
+      await AppServices.auth.signOut();
+      NavigationService.popToRoot();
+      NavigationService.showSnackBar(
+        const SnackBar(
+          content: Text('Signed out successfully.'),
+          backgroundColor: Colors.black87,
+          duration: Duration(seconds: 2),
+        ),
+      );
+    } catch (e) {
+      NavigationService.showSnackBar(
+        SnackBar(
+          content: Text('Sign-out failed: ${e.toString()}'),
+          backgroundColor: Colors.red,
+          duration: const Duration(seconds: 3),
+        ),
+      );
+    }
   }
 }
 
@@ -382,4 +513,3 @@ class SettingsBearCharacterPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
-

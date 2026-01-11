@@ -1,8 +1,26 @@
 import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
+
+import '../models/child_profile.dart';
+import '../services/app_services.dart';
 import 'category_listing_screen.dart';
+import 'child_profile_screen.dart';
+import 'settings_screen.dart';
 
 class HomeScreen extends StatelessWidget {
+  static const List<Color> _rainbowGradientColors = <Color>[
+    Colors.purple,
+    Colors.blue,
+    Colors.cyan,
+    Colors.green,
+    Colors.yellow,
+    Colors.orange,
+    Colors.red,
+  ];
+
+  static const Color _numbersIconColor = Color(0xFF1976D2);
+
   const HomeScreen({super.key});
 
   @override
@@ -26,8 +44,8 @@ class HomeScreen extends StatelessWidget {
                       color: Colors.brown[300],
                       shape: BoxShape.circle,
                     ),
-                    child: CustomPaint(
-                      size: const Size(40, 40),
+                    child: const CustomPaint(
+                      size: Size(40, 40),
                       painter: SmallBearIconPainter(),
                     ),
                   ),
@@ -76,6 +94,18 @@ class HomeScreen extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 30),
+                      AnimatedBuilder(
+                        animation: AppServices.childSelection,
+                        builder: (context, _) {
+                          final profile =
+                              AppServices.childSelection.activeProfile;
+                          if (profile == null) {
+                            return _buildNoProfileCard(context);
+                          }
+                          return _buildActiveProfileCard(context, profile);
+                        },
+                      ),
+                      const SizedBox(height: 24),
                       // Category cards grid
                       GridView.count(
                         shrinkWrap: true,
@@ -96,7 +126,8 @@ class HomeScreen extends StatelessWidget {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) => const CategoryListingScreen(),
+                                  builder: (context) =>
+                                      const CategoryListingScreen(),
                                 ),
                               );
                             },
@@ -108,7 +139,7 @@ class HomeScreen extends StatelessWidget {
                             icon: Icons.numbers,
                             backgroundColor: Colors.lightBlue[100]!,
                             iconColor: Colors.blue,
-                            onTap: () {},
+                            onTap: () => _openLearningCatalog(context),
                           ),
                           _buildCategoryCard(
                             context,
@@ -118,7 +149,7 @@ class HomeScreen extends StatelessWidget {
                             backgroundColor: Colors.blue[900]!,
                             iconColor: Colors.white,
                             gradient: true,
-                            onTap: () {},
+                            onTap: () => _openLearningCatalog(context),
                           ),
                           _buildCategoryCard(
                             context,
@@ -128,7 +159,7 @@ class HomeScreen extends StatelessWidget {
                             backgroundColor: Colors.green[400]!,
                             iconColor: Colors.white,
                             showLion: true,
-                            onTap: () {},
+                            onTap: () => _openLearningCatalog(context),
                           ),
                         ],
                       ),
@@ -158,13 +189,162 @@ class HomeScreen extends StatelessWidget {
                   ),
                   IconButton(
                     icon: Icon(Icons.settings, color: Colors.grey[600]),
-                    onPressed: () {},
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const SettingsScreen(),
+                        ),
+                      );
+                    },
                   ),
                 ],
               ),
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  void _openLearningCatalog(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const CategoryListingScreen(),
+      ),
+    );
+  }
+
+  Widget _buildActiveProfileCard(
+    BuildContext context,
+    ChildProfile profile,
+  ) {
+    final accent = _avatarColor(profile.avatarKey);
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: _withOpacity(accent, 0.18),
+        borderRadius: BorderRadius.circular(24),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 72,
+            height: 72,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              shape: BoxShape.circle,
+              border: Border.all(color: accent, width: 3),
+            ),
+            child: const Padding(
+              padding: EdgeInsets.all(8),
+              child: CustomPaint(
+                painter: SmallBearIconPainter(),
+              ),
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  profile.name,
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Level ${profile.level}  •  ${profile.stars} stars',
+                  style: TextStyle(
+                    color: Colors.grey[700],
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Tap to switch explorers or review progress.',
+                  style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                ),
+              ],
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const ChildProfileScreen(),
+                ),
+              );
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.black,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14),
+              ),
+            ),
+            child: const Text(
+              'Manage',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNoProfileCard(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.grey[100],
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: Colors.grey[200]!),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.child_care, size: 48, color: Colors.black54),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Create an explorer',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Add your child profile to unlock progress tracking.',
+                  style: TextStyle(color: Colors.grey[600]),
+                ),
+              ],
+            ),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const ChildProfileScreen(),
+                ),
+              );
+            },
+            child: const Text('Add Explorer'),
+          ),
+        ],
       ),
     );
   }
@@ -187,18 +367,10 @@ class HomeScreen extends StatelessWidget {
           color: backgroundColor,
           borderRadius: BorderRadius.circular(20),
           gradient: gradient
-              ? LinearGradient(
+              ? const LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
-                  colors: [
-                    Colors.purple,
-                    Colors.blue,
-                    Colors.cyan,
-                    Colors.green,
-                    Colors.yellow,
-                    Colors.orange,
-                    Colors.red,
-                  ],
+                  colors: _rainbowGradientColors,
                 )
               : null,
         ),
@@ -208,8 +380,8 @@ class HomeScreen extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               if (showLion)
-                CustomPaint(
-                  size: const Size(80, 80),
+                const CustomPaint(
+                  size: Size(80, 80),
                   painter: LionIconPainter(),
                 )
               else if (title == 'ABC')
@@ -232,7 +404,7 @@ class HomeScreen extends StatelessWidget {
                 subtitle,
                 style: TextStyle(
                   fontSize: 14,
-                  color: iconColor.withOpacity(0.8),
+                  color: _withOpacity(iconColor, 0.8),
                 ),
               ),
             ],
@@ -243,7 +415,7 @@ class HomeScreen extends StatelessWidget {
   }
 
   Widget _buildABCIcon() {
-    return Row(
+    return const Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         Text(
@@ -275,7 +447,7 @@ class HomeScreen extends StatelessWidget {
   }
 
   Widget _buildNumbersIcon() {
-    return Row(
+    return const Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         Text(
@@ -283,7 +455,7 @@ class HomeScreen extends StatelessWidget {
           style: TextStyle(
             fontSize: 40,
             fontWeight: FontWeight.bold,
-            color: Colors.blue[700],
+            color: _numbersIconColor,
           ),
         ),
         Text(
@@ -291,7 +463,7 @@ class HomeScreen extends StatelessWidget {
           style: TextStyle(
             fontSize: 40,
             fontWeight: FontWeight.bold,
-            color: Colors.blue[700],
+            color: _numbersIconColor,
           ),
         ),
         Text(
@@ -299,15 +471,36 @@ class HomeScreen extends StatelessWidget {
           style: TextStyle(
             fontSize: 40,
             fontWeight: FontWeight.bold,
-            color: Colors.blue[700],
+            color: _numbersIconColor,
           ),
         ),
       ],
     );
   }
+
+  Color _withOpacity(Color color, double opacity) {
+    final alpha = (opacity * 255).round().clamp(0, 255).toInt();
+    return color.withAlpha(alpha);
+  }
+
+  Color _avatarColor(String key) {
+    switch (key) {
+      case 'bunny':
+        return Colors.pink[300]!;
+      case 'fox':
+        return Colors.deepOrange;
+      case 'alien':
+        return Colors.lightBlue;
+      case 'monster':
+        return Colors.purple;
+      default:
+        return Colors.amber;
+    }
+  }
 }
 
 class SmallBearIconPainter extends CustomPainter {
+  const SmallBearIconPainter();
   @override
   void paint(Canvas canvas, Size size) {
     final center = Offset(size.width / 2, size.height / 2);
@@ -354,6 +547,7 @@ class SmallBearIconPainter extends CustomPainter {
 }
 
 class LionIconPainter extends CustomPainter {
+  const LionIconPainter();
   @override
   void paint(Canvas canvas, Size size) {
     final center = Offset(size.width / 2, size.height / 2);
@@ -408,4 +602,3 @@ class LionIconPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
-

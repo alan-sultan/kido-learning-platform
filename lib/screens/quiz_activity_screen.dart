@@ -73,7 +73,8 @@ class _QuizActivityScreenState extends State<QuizActivityScreen> {
                         value: progress,
                         minHeight: 8,
                         backgroundColor: Colors.grey[200],
-                        valueColor: AlwaysStoppedAnimation<Color>(Colors.amber[700]!),
+                        valueColor:
+                            AlwaysStoppedAnimation<Color>(Colors.amber[700]!),
                       ),
                     ),
                     const SizedBox(height: 30),
@@ -86,7 +87,7 @@ class _QuizActivityScreenState extends State<QuizActivityScreen> {
                         border: Border.all(color: Colors.grey[300]!),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.05),
+                            color: Colors.black.withAlpha(13),
                             blurRadius: 10,
                             offset: const Offset(0, 5),
                           ),
@@ -110,7 +111,7 @@ class _QuizActivityScreenState extends State<QuizActivityScreen> {
                                 color: Colors.amber[700],
                                 shape: BoxShape.circle,
                               ),
-                              child: Icon(
+                              child: const Icon(
                                 Icons.volume_up,
                                 color: Colors.white,
                                 size: 20,
@@ -230,7 +231,7 @@ class _QuizActivityScreenState extends State<QuizActivityScreen> {
             const SizedBox(width: 16),
             Text(
               label,
-              style: TextStyle(
+              style: const TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w600,
                 color: Colors.black,
@@ -282,9 +283,11 @@ class BarnIllustrationPainter extends CustomPainter {
 
     // Barn roof (triangle)
     final roofPath = Path();
-    roofPath.moveTo(center.dx - size.width * 0.2, center.dy - size.height * 0.2);
+    roofPath.moveTo(
+        center.dx - size.width * 0.2, center.dy - size.height * 0.2);
     roofPath.lineTo(center.dx, center.dy - size.height * 0.35);
-    roofPath.lineTo(center.dx + size.width * 0.2, center.dy - size.height * 0.2);
+    roofPath.lineTo(
+        center.dx + size.width * 0.2, center.dy - size.height * 0.2);
     roofPath.close();
     final roofPaint = Paint()..color = Colors.brown[700]!;
     canvas.drawPath(roofPath, roofPaint);
@@ -335,7 +338,8 @@ class QuizOwlCharacterPainter extends CustomPainter {
       ..strokeWidth = 2;
     canvas.drawOval(
       Rect.fromCenter(
-        center: Offset(center.dx - size.width * 0.15, center.dy - size.height * 0.2),
+        center: Offset(
+            center.dx - size.width * 0.15, center.dy - size.height * 0.2),
         width: size.width * 0.25,
         height: size.width * 0.2,
       ),
@@ -343,7 +347,8 @@ class QuizOwlCharacterPainter extends CustomPainter {
     );
     canvas.drawOval(
       Rect.fromCenter(
-        center: Offset(center.dx + size.width * 0.15, center.dy - size.height * 0.2),
+        center: Offset(
+            center.dx + size.width * 0.15, center.dy - size.height * 0.2),
         width: size.width * 0.25,
         height: size.width * 0.2,
       ),
@@ -381,4 +386,3 @@ class QuizOwlCharacterPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
-
