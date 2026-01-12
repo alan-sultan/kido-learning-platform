@@ -97,10 +97,12 @@ class ProgressRepository {
     int hintsUsed = 0,
   }) async {
     final existing = await fetchLessonProgress(userId, childId, lessonId);
-    final bestScore = math.max(existing?.bestScore ?? 0, correctAnswers);
-    final improvedBestScore = bestScore > (existing?.bestScore ?? 0);
+    final previousBestScore = existing?.bestScore ?? 0;
+    final bestScore = math.max(previousBestScore, correctAnswers);
+    final improvedBestScore = bestScore > previousBestScore;
     final attempts = (existing?.attempts ?? 0) + 1;
-    final totalStars = (existing?.starsEarned ?? 0) + starsEarned;
+    final previousStars = existing?.starsEarned ?? 0;
+    final totalStars = math.max(previousStars, starsEarned);
     final previousFastest = existing?.fastestDurationSeconds ?? 0;
     var fastestDuration = previousFastest;
     var improvedFastestTime = false;
@@ -128,6 +130,7 @@ class ProgressRepository {
 
     return QuizProgressResult(
       totalStars: totalStars,
+      previousStars: previousStars,
       bestScore: bestScore,
       fastestDurationSeconds: fastestDuration,
       improvedBestScore: improvedBestScore,
@@ -152,6 +155,7 @@ class ProgressRepository {
 class QuizProgressResult {
   const QuizProgressResult({
     required this.totalStars,
+    required this.previousStars,
     required this.bestScore,
     required this.fastestDurationSeconds,
     required this.improvedBestScore,
@@ -159,6 +163,7 @@ class QuizProgressResult {
   });
 
   final int totalStars;
+  final int previousStars;
   final int bestScore;
   final int fastestDurationSeconds;
   final bool improvedBestScore;

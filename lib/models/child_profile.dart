@@ -1,5 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+import '../data/avatar_catalog.dart';
+
 class ChildProfile {
   final String id;
   final String name;
@@ -83,11 +85,5 @@ class ChildProfile {
     );
   }
 
-  static const defaultAvatars = <String>[
-    'bear',
-    'bunny',
-    'fox',
-    'alien',
-    'monster'
-  ];
+  static List<String> get defaultAvatars => AvatarCatalog.keys;
 }

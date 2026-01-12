@@ -49,6 +49,7 @@ class QuizQuestion {
   final int correctIndex;
   final String illustration;
   final String hint;
+  final int order;
 
   const QuizQuestion({
     required this.id,
@@ -57,6 +58,7 @@ class QuizQuestion {
     required this.correctIndex,
     required this.illustration,
     this.hint = '',
+    this.order = 0,
   });
 
   factory QuizQuestion.fromDoc(DocumentSnapshot<Map<String, dynamic>> doc) {
@@ -71,6 +73,7 @@ class QuizQuestion {
       correctIndex: (data['correctIndex'] as num?)?.toInt() ?? 0,
       illustration: data['illustration'] as String? ?? 'default',
       hint: data['hint'] as String? ?? '',
+      order: (data['order'] as num?)?.toInt() ?? 0,
     );
   }
 
@@ -81,6 +84,7 @@ class QuizQuestion {
       'correctIndex': correctIndex,
       'illustration': illustration,
       'hint': hint,
+      'order': order,
       'updatedAt': FieldValue.serverTimestamp(),
     };
   }

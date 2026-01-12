@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+import '../data/seeded_learning_content.dart';
 import '../models/learning_category.dart';
 import '../models/lesson.dart';
 import '../models/quiz.dart';
@@ -20,54 +21,114 @@ class LearningContentRepository {
   CollectionReference<Map<String, dynamic>> get _quizzesRef =>
       _firestore.collection(FirestorePaths.quizzesCollection());
 
-  Stream<List<LearningCategory>> watchCategories() {
-    return _categoriesRef.orderBy('order').snapshots().map(
-          (snapshot) => snapshot.docs
-              .map(
-                (doc) => LearningCategory.fromMap(doc.id, doc.data()),
-              )
-              .toList(growable: false),
-        );
+  Stream<List<LearningCategory>> watchCategories() async* {
+    try {
+      await for (final snapshot in _categoriesRef.orderBy('order').snapshots()) {
+        final categories = snapshot.docs
+            .map((doc) => LearningCategory.fromMap(doc.id, doc.data()))
+            .toList(growable: false);
+        if (categories.isEmpty) {
+          yield _seededCategories();
+        } else {
+          yield categories;
+        }
+      }
+    } catch (_) {
+      yield _seededCategories();
+    }
   }
 
   Future<List<LearningCategory>> fetchCategories() async {
-    final snapshot = await _categoriesRef.orderBy('order').get();
-    return snapshot.docs
-        .map((doc) => LearningCategory.fromMap(doc.id, doc.data()))
-        .toList(growable: false);
+    try {
+      final snapshot = await _categoriesRef.orderBy('order').get();
+      final categories = snapshot.docs
+          .map((doc) => LearningCategory.fromMap(doc.id, doc.data()))
+          .toList(growable: false);
+      if (categories.isEmpty) {
+        return _seededCategories();
+      }
+      return categories;
+    } catch (_) {
+      return _seededCategories();
+    }
   }
 
-  Stream<List<Lesson>> watchLessons({String? categoryId}) {
-    Query<Map<String, dynamic>> query = _lessonsRef.orderBy('order');
+  Stream<List<Lesson>> watchLessons({String? categoryId}) async* {
+    Query<Map<String, dynamic>> query = _lessonsRef;
+    var needsClientSort = false;
     if (categoryId != null && categoryId.isNotEmpty) {
       query = query.where('categoryId', isEqualTo: categoryId);
+      needsClientSort = true;
+    } else {
+      query = query.orderBy('order');
     }
-    return query.snapshots().map(
-          (snapshot) => snapshot.docs
-              .map((doc) => Lesson.fromDoc(doc))
-              .toList(growable: false),
-        );
+
+    try {
+      await for (final snapshot in query.snapshots()) {
+        var lessons = snapshot.docs
+            .map((doc) => Lesson.fromDoc(doc))
+            .toList(growable: false);
+        if (lessons.isEmpty) {
+          lessons = _seededLessons(categoryId: categoryId);
+        } else if (needsClientSort) {
+          lessons = lessons.toList()
+            ..sort((a, b) => a.order.compareTo(b.order));
+        }
+        yield lessons;
+      }
+    } catch (_) {
+      yield _seededLessons(categoryId: categoryId);
+    }
   }
 
   Future<List<Lesson>> fetchLessons({String? categoryId}) async {
-    Query<Map<String, dynamic>> query = _lessonsRef.orderBy('order');
+    Query<Map<String, dynamic>> query = _lessonsRef;
+    var needsClientSort = false;
     if (categoryId != null && categoryId.isNotEmpty) {
       query = query.where('categoryId', isEqualTo: categoryId);
+      needsClientSort = true;
+    } else {
+      query = query.orderBy('order');
     }
-    final snapshot = await query.get();
-    return snapshot.docs.map(Lesson.fromDoc).toList(growable: false);
+    try {
+      final snapshot = await query.get();
+      var lessons = snapshot.docs.map(Lesson.fromDoc).toList(growable: false);
+      if (lessons.isEmpty) {
+        lessons = _seededLessons(categoryId: categoryId);
+      } else if (needsClientSort) {
+        lessons = lessons.toList()
+          ..sort((a, b) => a.order.compareTo(b.order));
+      }
+      return lessons;
+    } catch (_) {
+      return _seededLessons(categoryId: categoryId);
+    }
   }
 
   Future<Lesson?> fetchLesson(String lessonId) async {
-    final doc = await _lessonsRef.doc(lessonId).get();
-    if (!doc.exists) return null;
-    return Lesson.fromDoc(doc);
+    try {
+      final doc = await _lessonsRef.doc(lessonId).get();
+      if (!doc.exists) {
+        return _seededLessonById(lessonId);
+      }
+      return Lesson.fromDoc(doc);
+    } catch (_) {
+      return _seededLessonById(lessonId);
+    }
   }
 
-  Stream<Lesson?> watchLesson(String lessonId) {
-    return _lessonsRef.doc(lessonId).snapshots().map(
-          (doc) => doc.exists ? Lesson.fromDoc(doc) : null,
-        );
+  Stream<Lesson?> watchLesson(String lessonId) async* {
+    try {
+      await for (final doc in _lessonsRef.doc(lessonId).snapshots()) {
+        if (doc.exists) {
+          yield Lesson.fromDoc(doc);
+        } else {
+          yield _seededLessonById(lessonId);
+        }
+      }
+    } catch (_) {
+      yield _seededLessonById(lessonId);
+    }
   }
 
   Future<Quiz?> fetchQuizById(String quizId) async {
@@ -105,5 +166,32 @@ class LearningContentRepository {
         .orderBy('order')
         .get();
     return snapshot.docs.map(QuizQuestion.fromDoc).toList(growable: false);
+  }
+
+  List<LearningCategory> _seededCategories() {
+    return SeededLearningContent.categories;
+  }
+
+  List<Lesson> _seededLessons({String? categoryId}) {
+    final source = SeededLearningContent.lessons;
+    if (categoryId == null || categoryId.isEmpty) {
+      final sorted = List<Lesson>.of(source)
+        ..sort((a, b) => a.order.compareTo(b.order));
+      return List<Lesson>.unmodifiable(sorted);
+    }
+    final filtered = List<Lesson>.of(
+      source.where((lesson) => lesson.categoryId == categoryId),
+    )
+      ..sort((a, b) => a.order.compareTo(b.order));
+    return List<Lesson>.unmodifiable(filtered);
+  }
+
+  Lesson? _seededLessonById(String lessonId) {
+    for (final lesson in SeededLearningContent.lessons) {
+      if (lesson.id == lessonId) {
+        return lesson;
+      }
+    }
+    return null;
   }
 }
