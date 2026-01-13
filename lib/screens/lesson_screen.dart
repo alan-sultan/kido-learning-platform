@@ -16,6 +16,8 @@ class LessonScreen extends StatefulWidget {
 }
 
 class _LessonScreenState extends State<LessonScreen> {
+  final Map<String, Set<int>> _completedActivitySteps = {};
+
   @override
   Widget build(BuildContext context) {
     final lessonId = widget.lessonId;
@@ -173,16 +175,28 @@ class _LessonScreenState extends State<LessonScreen> {
                   ),
                 ),
                 const SizedBox(height: 16),
-                if (lesson.content.isNotEmpty)
-                  Text(
-                    lesson.content,
-                    style: const TextStyle(
-                      fontSize: 18,
-                      color: Colors.black87,
-                      height: 1.5,
+                if (lesson.content.isNotEmpty) ...[
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(18),
+                    decoration: BoxDecoration(
+                      color: Colors.amber[50],
+                      borderRadius: BorderRadius.circular(18),
+                    ),
+                    child: Text(
+                      lesson.content,
+                      style: const TextStyle(
+                        fontSize: 18,
+                        color: Colors.black87,
+                        height: 1.5,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
-                const SizedBox(height: 24),
+                  const SizedBox(height: 24),
+                ],
+                _buildActivitySection(lesson),
+                const SizedBox(height: 32),
                 if (lesson.durationMinutes > 0)
                   Row(
                     children: [
@@ -286,7 +300,7 @@ class _LessonScreenState extends State<LessonScreen> {
         padding: const EdgeInsets.all(18),
         decoration: BoxDecoration(
           color: Colors.grey[50],
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(18),
           border: Border.all(color: Colors.grey[200]!),
         ),
         child: const Text(
@@ -395,6 +409,184 @@ class _LessonScreenState extends State<LessonScreen> {
             ],
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildActivitySection(Lesson lesson) {
+    final steps = _extractActivitySteps(lesson);
+    final lessonKey = _lessonKey(lesson);
+    if (steps.isEmpty) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(18),
+        decoration: BoxDecoration(
+          color: Colors.grey[50],
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: Colors.grey[200]!),
+        ),
+        child: const Text(
+          'Read the lesson story above together before starting the quiz.',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            color: Colors.black87,
+          ),
+        ),
+      );
+    }
+
+    final accent = _activityAccentColor(lesson.categoryId);
+    final completedCount = _completedActivitySteps[lessonKey]?.length ?? 0;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: accent.withValues(alpha: 0.2)),
+        boxShadow: [
+          BoxShadow(
+            color: accent.withValues(alpha: 0.08),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.sentiment_satisfied_alt,
+                  color: accent, size: 24),
+              const SizedBox(width: 8),
+              const Text(
+                'Hands-on activity',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const Spacer(),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                decoration: BoxDecoration(
+                  color: accent.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Text(
+                  '$completedCount/${steps.length} done',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    color: accent,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          for (var i = 0; i < steps.length; i++) ...[
+            _buildActivityStepCard(
+              lesson: lesson,
+              lessonKey: lessonKey,
+              index: i,
+              text: steps[i],
+              accent: accent,
+            ),
+            if (i != steps.length - 1) const SizedBox(height: 12),
+          ],
+          const SizedBox(height: 12),
+          Text(
+            'Tap each card after you try it!',
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+              color: accent,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildActivityStepCard({
+    required Lesson lesson,
+    required String lessonKey,
+    required int index,
+    required String text,
+    required Color accent,
+  }) {
+    final isDone = _completedActivitySteps[lessonKey]?.contains(index) ?? false;
+    return GestureDetector(
+      onTap: () => _toggleActivityStep(lessonKey, index),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 250),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: isDone ? accent.withValues(alpha: 0.14) : Colors.grey[50],
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: accent.withValues(alpha: 0.2)),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            CircleAvatar(
+              radius: 28,
+              backgroundColor: Colors.white,
+              child: Icon(
+                _activityIconForCategory(lesson.categoryId),
+                color: accent,
+                size: 26,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Step ${index + 1}',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                      color: accent,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    text,
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black87,
+                      height: 1.4,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 12),
+            AnimatedSwitcher(
+              duration: const Duration(milliseconds: 200),
+              child: isDone
+                  ? Icon(
+                      Icons.check_circle,
+                      key: ValueKey('done-$index'),
+                      color: accent,
+                      size: 30,
+                    )
+                  : Icon(
+                      Icons.touch_app,
+                      key: ValueKey('todo-$index'),
+                      color: accent,
+                      size: 30,
+                    ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -570,6 +762,90 @@ class _LessonScreenState extends State<LessonScreen> {
         ),
       ),
     );
+  }
+
+  void _toggleActivityStep(String lessonKey, int index) {
+    setState(() {
+      final completedSet =
+          _completedActivitySteps.putIfAbsent(lessonKey, () => <int>{});
+      if (completedSet.contains(index)) {
+        completedSet.remove(index);
+      } else {
+        completedSet.add(index);
+      }
+    });
+  }
+
+  List<String> _extractActivitySteps(Lesson lesson) {
+    final steps = <String>[];
+
+    void addFrom(String source) {
+      final trimmed = source.trim();
+      if (trimmed.isEmpty) return;
+      final parts =
+          trimmed.split(RegExp(r'(?<=[.!?])\s+')).where((part) => part.isNotEmpty);
+      for (final part in parts) {
+        final formatted = _formatActivityStep(part);
+        if (formatted.length < 6) continue;
+        steps.add(formatted);
+        if (steps.length >= 4) break;
+      }
+    }
+
+    addFrom(lesson.content);
+    if (steps.length < 4) addFrom(lesson.description);
+
+    if (steps.isEmpty) {
+      steps.add('Talk about ${lesson.title} together before you start the quiz.');
+    }
+
+    return steps;
+  }
+
+  String _formatActivityStep(String raw) {
+    var output = raw.trim();
+    if (output.isEmpty) return '';
+    if (output.endsWith('.')) {
+      output = output.substring(0, output.length - 1);
+    }
+    if (output.length > 140) {
+      output = '${output.substring(0, 137)}…';
+    }
+    return output;
+  }
+
+  String _lessonKey(Lesson lesson) {
+    return lesson.id.isNotEmpty ? lesson.id : lesson.title;
+  }
+
+  IconData _activityIconForCategory(String categoryId) {
+    switch (categoryId) {
+      case 'alphabet':
+        return Icons.text_rotation_none;
+      case 'numbers':
+        return Icons.exposure_plus_1;
+      case 'colors':
+        return Icons.palette;
+      case 'animals':
+        return Icons.pets;
+      default:
+        return Icons.auto_stories;
+    }
+  }
+
+  Color _activityAccentColor(String categoryId) {
+    switch (categoryId) {
+      case 'alphabet':
+        return Colors.deepOrangeAccent;
+      case 'numbers':
+        return Colors.indigo;
+      case 'colors':
+        return Colors.purple;
+      case 'animals':
+        return Colors.green;
+      default:
+        return Colors.blueGrey;
+    }
   }
 
   Color _illustrationBackground(LessonIllustration illustration) {

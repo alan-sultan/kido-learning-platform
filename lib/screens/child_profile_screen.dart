@@ -1,6 +1,8 @@
-import 'dart:math' as math;
+import 'dart:ui' as ui;
+
 import 'package:flutter/material.dart';
 
+import '../data/avatar_catalog.dart';
 import '../models/child_profile.dart';
 import '../services/app_services.dart';
 import 'edit_profile_screen.dart';
@@ -39,63 +41,61 @@ class _ChildProfileScreenState extends State<ChildProfileScreen> {
     }
 
     return Scaffold(
-      backgroundColor: Colors.grey[100],
-      appBar: AppBar(
-        backgroundColor: Colors.grey[100],
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: const Text(
-          'KIDO',
-          style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-            color: Colors.black,
-          ),
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.settings, color: Colors.black),
-            onPressed: () {},
+      backgroundColor: const Color(0xFFF8F8F5),
+      body: Stack(
+        children: [
+          const _BackdropBlobs(),
+          SafeArea(
+            child: Column(
+              children: [
+                _TopAppBar(
+                  onBack: () => Navigator.of(context).maybePop(),
+                  onSettings: () {},
+                ),
+                Expanded(
+                  child: FutureBuilder<ChildProfile?>(
+                    future: _ensureProfileFuture,
+                    builder: (context, snapshot) {
+                      if (snapshot.hasError) {
+                        return _buildErrorState(
+                          'We could not load profiles. Please try again shortly.',
+                        );
+                      }
+
+                      return StreamBuilder<List<ChildProfile>>(
+                        stream:
+                            AppServices.childProfiles.watchProfiles(user.uid),
+                        builder: (context, profilesSnapshot) {
+                          if (profilesSnapshot.connectionState ==
+                                  ConnectionState.waiting &&
+                              !profilesSnapshot.hasData) {
+                            return const Center(
+                                child: CircularProgressIndicator());
+                          }
+
+                          if (profilesSnapshot.hasError) {
+                            return _buildErrorState(
+                                'Unable to load profiles right now.');
+                          }
+
+                          final profiles = profilesSnapshot.data ?? const [];
+                          if (profiles.isEmpty) {
+                            return _buildEmptyState(context);
+                          }
+
+                          final selectedProfile =
+                              _selectedProfileFromList(profiles);
+                          return _buildProfileBody(
+                              context, profiles, selectedProfile);
+                        },
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
-      ),
-      body: SafeArea(
-        child: FutureBuilder<ChildProfile?>(
-          future: _ensureProfileFuture,
-          builder: (context, snapshot) {
-            if (snapshot.hasError) {
-              return _buildErrorState(
-                'We could not load profiles. Please try again shortly.',
-              );
-            }
-
-            return StreamBuilder<List<ChildProfile>>(
-              stream: AppServices.childProfiles.watchProfiles(user.uid),
-              builder: (context, profilesSnapshot) {
-                if (profilesSnapshot.connectionState ==
-                        ConnectionState.waiting &&
-                    !profilesSnapshot.hasData) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-
-                if (profilesSnapshot.hasError) {
-                  return _buildErrorState('Unable to load profiles right now.');
-                }
-
-                final profiles = profilesSnapshot.data ?? const [];
-                if (profiles.isEmpty) {
-                  return _buildEmptyState(context);
-                }
-
-                final selectedProfile = _selectedProfileFromList(profiles);
-                return _buildProfileBody(context, profiles, selectedProfile);
-              },
-            );
-          },
-        ),
       ),
       bottomNavigationBar: _buildBottomNavigationBar(2),
     );
@@ -111,176 +111,201 @@ class _ChildProfileScreenState extends State<ChildProfileScreen> {
         : '+ SUPER LEARNER';
 
     return SingleChildScrollView(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 24),
-        child: Column(
-          children: [
-            const SizedBox(height: 30),
+      padding: const EdgeInsets.fromLTRB(24, 0, 24, 140),
+      child: Column(
+        children: [
+          if (profiles.length > 1) ...[
+            const SizedBox(height: 12),
             _buildProfileSelector(profiles, profile.id),
-            const SizedBox(height: 24),
-            Column(
-              children: [
-                Stack(
-                  children: [
-                    Container(
-                      width: 120,
-                      height: 120,
-                      decoration: BoxDecoration(
-                        color:
-                            _withOpacity(_avatarColor(profile.avatarKey), 0.2),
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: _avatarColor(profile.avatarKey),
-                          width: 3,
-                        ),
-                      ),
-                      child: CustomPaint(
-                        size: const Size(120, 120),
-                        painter: ChildAvatarPainter(),
-                      ),
-                    ),
-                    Positioned(
-                      bottom: 0,
-                      right: 0,
-                      child: Container(
-                        width: 36,
-                        height: 36,
-                        decoration: BoxDecoration(
-                          color: Colors.amber[700],
-                          shape: BoxShape.circle,
-                          border: Border.all(color: Colors.white, width: 2),
-                        ),
-                        child: const Icon(
-                          Icons.camera_alt,
-                          size: 18,
-                          color: Colors.white,
-                        ),
-                      ),
+          ],
+          const SizedBox(height: 16),
+          _buildProfileHeader(profile, badgeLabel),
+          const SizedBox(height: 24),
+          Row(
+            children: [
+              Expanded(
+                child: _buildStatCard(
+                  icon: Icons.hub,
+                  iconColor: const Color(0xFF2563EB),
+                  value: profile.level.toString(),
+                  label: 'CURRENT LEVEL',
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: _buildStatCard(
+                  icon: Icons.star,
+                  iconColor: const Color(0xFFEAB308),
+                  value: profile.stars.toString(),
+                  label: 'STARS EARNED',
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 24),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: () => _openEditProfile(profile),
+              icon: const Icon(Icons.edit, color: Color(0xFF1C190D)),
+              label: const Text(
+                'Edit Profile',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFF1C190D),
+                ),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFF2CC0D),
+                padding: const EdgeInsets.symmetric(vertical: 18),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                elevation: 6,
+                shadowColor: const Color(0x40D9B405),
+              ),
+            ),
+          ),
+          const SizedBox(height: 20),
+          _buildListTile(
+            icon: Icons.emoji_events,
+            iconColor: const Color(0xFFF97316),
+            title: 'My Achievements',
+            subtitle: 'View your trophies and badges',
+            onTap: () {},
+          ),
+          const SizedBox(height: 12),
+          _buildListTile(
+            icon: Icons.switch_account,
+            iconColor: const Color(0xFFA855F7),
+            title: 'Switch Profile',
+            subtitle: 'Log in as another child',
+            onTap: () => _showProfilePicker(profiles),
+          ),
+          const SizedBox(height: 12),
+          _buildListTile(
+            icon: Icons.add_circle_outline,
+            iconColor: const Color(0xFF0EA5E9),
+            title: 'Add New Explorer',
+            subtitle: 'Create another playful learner',
+            onTap: _handleAddProfile,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildProfileHeader(ChildProfile profile, String badgeLabel) {
+    final avatar = AvatarCatalog.byKey(profile.avatarKey);
+    final accent = avatar.accent;
+    return Column(
+      children: [
+        Stack(
+          alignment: Alignment.center,
+          children: [
+            ImageFiltered(
+              imageFilter: ui.ImageFilter.blur(sigmaX: 45, sigmaY: 45),
+              child: Container(
+                width: 220,
+                height: 220,
+                decoration: BoxDecoration(
+                  color: accent.withValues(alpha: 0.25),
+                  shape: BoxShape.circle,
+                ),
+              ),
+            ),
+            Container(
+              width: 180,
+              height: 180,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(color: accent, width: 6),
+                color: Colors.white,
+                boxShadow: const [
+                  BoxShadow(
+                    color: Color(0x22000000),
+                    blurRadius: 30,
+                    offset: Offset(0, 18),
+                  ),
+                ],
+              ),
+              child: ClipOval(
+                child: Image.network(
+                  avatar.imageUrl,
+                  fit: BoxFit.cover,
+                ),
+              ),
+            ),
+            Positioned(
+              bottom: 16,
+              right: 24,
+              child: Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(999),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Color(0x1A000000),
+                      blurRadius: 12,
+                      offset: Offset(0, 6),
                     ),
                   ],
                 ),
-                const SizedBox(height: 16),
-                Text(
-                  profile.name,
-                  style: const TextStyle(
-                    fontSize: 32,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: Colors.green[100],
-                    borderRadius: BorderRadius.circular(15),
-                  ),
-                  child: Text(
-                    badgeLabel,
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.green[700],
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 30),
-                Row(
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    Expanded(
-                      child: _buildStatCard(
-                        icon: Icons.person,
-                        iconColor: Colors.blue[700]!,
-                        value: profile.level.toString(),
-                        label: 'CURRENT LEVEL',
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: _buildStatCard(
-                        icon: Icons.star,
-                        iconColor: Colors.amber[700]!,
-                        value: profile.stars.toString(),
-                        label: 'STARS EARNED',
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 30),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: () => _openEditProfile(profile),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.amber[700],
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(15),
-                      ),
-                    ),
-                    child: const Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.check_circle,
-                          color: Colors.black,
-                        ),
-                        SizedBox(width: 8),
-                        Text(
-                          'Edit Profile',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                _buildListTile(
-                  icon: Icons.emoji_events,
-                  iconColor: Colors.amber[700]!,
-                  title: 'My Achievements',
-                  onTap: () {},
-                ),
-                const SizedBox(height: 12),
-                _buildListTile(
-                  icon: Icons.switch_account,
-                  iconColor: Colors.purple,
-                  title: 'Switch Profile',
-                  onTap: () => _showProfilePicker(profiles),
-                ),
-                const SizedBox(height: 12),
-                SizedBox(
-                  width: double.infinity,
-                  child: OutlinedButton.icon(
-                    onPressed: _handleAddProfile,
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      side: BorderSide(color: Colors.amber[700]!),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(15),
-                      ),
-                    ),
-                    icon: Icon(Icons.add, color: Colors.amber[700]!),
-                    label: Text(
-                      'Add New Explorer',
+                    Icon(Icons.stars, color: Color(0xFFF97316), size: 18),
+                    SizedBox(width: 6),
+                    Text(
+                      'Kid Safe',
                       style: TextStyle(
-                        color: Colors.amber[700],
-                        fontSize: 15,
-                        fontWeight: FontWeight.bold,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF1C190D),
                       ),
                     ),
-                  ),
+                  ],
                 ),
-              ],
+              ),
             ),
           ],
         ),
-      ),
+        const SizedBox(height: 16),
+        Text(
+          profile.name,
+          style: const TextStyle(
+            fontSize: 32,
+            fontWeight: FontWeight.w800,
+            color: Color(0xFF1C190D),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          decoration: BoxDecoration(
+            color: accent.withValues(alpha: 0.15),
+            borderRadius: BorderRadius.circular(999),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.bolt, color: accent, size: 16),
+              const SizedBox(width: 6),
+              Text(
+                badgeLabel,
+                style: TextStyle(
+                  fontWeight: FontWeight.w800,
+                  color: accent.darken(),
+                  letterSpacing: 1.2,
+                  fontSize: 12,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 
@@ -289,7 +314,7 @@ class _ChildProfileScreenState extends State<ChildProfileScreen> {
     String selectedId,
   ) {
     return SizedBox(
-      height: 120,
+      height: 110,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         itemCount: profiles.length,
@@ -297,45 +322,58 @@ class _ChildProfileScreenState extends State<ChildProfileScreen> {
         itemBuilder: (context, index) {
           final profile = profiles[index];
           final isSelected = profile.id == selectedId;
-          final color = _avatarColor(profile.avatarKey);
+          final avatar = AvatarCatalog.byKey(profile.avatarKey);
+          final color = avatar.accent;
           return GestureDetector(
             onTap: () => _onSelectProfile(profile.id),
-            child: Column(
-              children: [
-                AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  width: 80,
-                  height: 80,
-                  decoration: BoxDecoration(
-                    color: _withOpacity(color, 0.2),
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: isSelected ? color : Colors.transparent,
-                      width: 3,
-                    ),
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(10),
-                    child: CustomPaint(
-                      painter: ChildAvatarPainter(),
-                    ),
-                  ),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(
+                  color: isSelected ? color : Colors.transparent,
+                  width: 2,
                 ),
-                const SizedBox(height: 8),
-                SizedBox(
-                  width: 80,
-                  child: Text(
+                boxShadow: const [
+                  BoxShadow(
+                    color: Color(0x14000000),
+                    blurRadius: 12,
+                    offset: Offset(0, 6),
+                  ),
+                ],
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 54,
+                    height: 54,
+                    decoration: BoxDecoration(
+                      color: color.withValues(alpha: 0.15),
+                      shape: BoxShape.circle,
+                    ),
+                    child: ClipOval(
+                      child: Image.network(
+                        avatar.imageUrl,
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
                     profile.name,
                     style: TextStyle(
                       fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                      color: isSelected ? Colors.black : Colors.grey[600],
+                      fontWeight: FontWeight.w700,
+                      color: isSelected
+                          ? const Color(0xFF1C190D)
+                          : const Color(0xFF8F8A7A),
                     ),
-                    textAlign: TextAlign.center,
-                    overflow: TextOverflow.ellipsis,
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           );
         },
@@ -430,8 +468,10 @@ class _ChildProfileScreenState extends State<ChildProfileScreen> {
                 ...profiles.map(
                   (profile) => ListTile(
                     leading: CircleAvatar(
-                      backgroundColor:
-                          _withOpacity(_avatarColor(profile.avatarKey), 0.2),
+                      backgroundColor: _withOpacity(
+                        AvatarCatalog.byKey(profile.avatarKey).accent,
+                        0.2,
+                      ),
                       child: Text(
                         profile.name.substring(0, 1).toUpperCase(),
                         style: const TextStyle(color: Colors.black),
@@ -499,30 +539,48 @@ class _ChildProfileScreenState extends State<ChildProfileScreen> {
     required String label,
   }) {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 12),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(15),
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x0F000000),
+            blurRadius: 12,
+            offset: Offset(0, 6),
+          ),
+        ],
       ),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 32, color: iconColor),
-          const SizedBox(height: 8),
+          Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              color: iconColor.withValues(alpha: 0.15),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, color: iconColor),
+          ),
+          const SizedBox(height: 12),
           Text(
             value,
             style: const TextStyle(
-              fontSize: 32,
-              fontWeight: FontWeight.bold,
-              color: Colors.black,
+              fontSize: 36,
+              fontWeight: FontWeight.w800,
+              color: Color(0xFF1C190D),
             ),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 6),
           Text(
             label,
-            style: TextStyle(
+            textAlign: TextAlign.center,
+            style: const TextStyle(
               fontSize: 12,
-              color: Colors.grey[600],
-              fontWeight: FontWeight.w600,
+              color: Color(0xFF8A8266),
+              fontWeight: FontWeight.w700,
+              letterSpacing: 1.1,
             ),
           ),
         ],
@@ -563,46 +621,49 @@ class _ChildProfileScreenState extends State<ChildProfileScreen> {
   Widget _buildEmptyState(BuildContext context) {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.symmetric(horizontal: 24),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const SizedBox(height: 40),
+            const _BackdropBlobs(),
+            const SizedBox(height: 24),
             const Text(
               'Ready to create your explorer?',
               style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: Colors.black,
+                fontSize: 24,
+                fontWeight: FontWeight.w800,
+                color: Color(0xFF1C190D),
               ),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 12),
-            Text(
+            const Text(
               'Add your child profile to track levels, stars, and adventures.',
-              style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+              style: TextStyle(fontSize: 16, color: Color(0xFF8E8879)),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 32),
             ElevatedButton(
               onPressed: () async {
                 await AppServices.ensureDefaultChildProfile();
                 if (mounted) setState(() {});
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.amber[700],
+                backgroundColor: const Color(0xFFF2CC0D),
+                foregroundColor: const Color(0xFF1C190D),
                 padding:
-                    const EdgeInsets.symmetric(horizontal: 32, vertical: 14),
+                    const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(999),
                 ),
+                elevation: 6,
+                shadowColor: const Color(0x35D9B405),
               ),
               child: const Text(
                 'Create Profile',
                 style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
                 ),
               ),
             ),
@@ -652,22 +713,6 @@ class _ChildProfileScreenState extends State<ChildProfileScreen> {
     );
   }
 
-  Color _avatarColor(String key) {
-    switch (key) {
-      case 'bunny':
-        return Colors.pink[200]!;
-      case 'fox':
-        return Colors.deepOrange;
-      case 'alien':
-        return Colors.lightBlue;
-      case 'monster':
-        return Colors.purple;
-      case 'bear':
-      default:
-        return Colors.orange;
-    }
-  }
-
   Color _withOpacity(Color color, double opacity) {
     final alpha = (opacity * 255).round().clamp(0, 255).toInt();
     return color.withAlpha(alpha);
@@ -677,139 +722,232 @@ class _ChildProfileScreenState extends State<ChildProfileScreen> {
     required IconData icon,
     required Color iconColor,
     required String title,
+    String? subtitle,
     required VoidCallback onTap,
   }) {
     return Container(
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(15),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x0F000000),
+            blurRadius: 12,
+            offset: Offset(0, 6),
+          ),
+        ],
       ),
-      child: ListTile(
-        leading: Container(
-          width: 40,
-          height: 40,
-          decoration: BoxDecoration(
-            color: _withOpacity(iconColor, 0.1),
-            borderRadius: BorderRadius.circular(10),
+      child: Row(
+        children: [
+          Container(
+            width: 52,
+            height: 52,
+            decoration: BoxDecoration(
+              color: iconColor.withValues(alpha: 0.1),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, color: iconColor, size: 24),
           ),
-          child: Icon(icon, color: iconColor),
-        ),
-        title: Text(
-          title,
-          style: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-            color: Colors.black,
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF1C190D),
+                  ),
+                ),
+                if (subtitle != null) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    subtitle,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      color: Color(0xFF8E8879),
+                    ),
+                  ),
+                ],
+              ],
+            ),
           ),
-        ),
-        trailing:
-            Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey[600]),
-        onTap: onTap,
+          const Icon(Icons.chevron_right, color: Color(0xFFB0A999)),
+        ],
       ),
     );
   }
 
   Widget _buildBottomNavigationBar(int selectedIndex) {
-    return Container(
-      height: 70,
-      decoration: BoxDecoration(
-        color: Colors.grey[900],
-        boxShadow: [
-          BoxShadow(
-            color: _withOpacity(Colors.black, 0.1),
-            blurRadius: 10,
-            offset: const Offset(0, -2),
-          ),
-        ],
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [
-          _buildNavItem(Icons.home, 0, selectedIndex),
-          _buildNavItem(Icons.play_circle_outline, 1, selectedIndex),
-          _buildNavItem(Icons.person, 2, selectedIndex),
-          _buildNavItem(Icons.settings, 3, selectedIndex),
-        ],
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+      child: Container(
+        height: 72,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(999),
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0x1F000000),
+              blurRadius: 20,
+              offset: Offset(0, 10),
+            ),
+          ],
+          border: Border.all(color: const Color(0xFFEAE4D2)),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: [
+            _buildNavItem(Icons.home, 0, selectedIndex),
+            _buildNavItem(Icons.map, 1, selectedIndex),
+            _buildProfileNavItem(selectedIndex == 2),
+            _buildNavItem(Icons.school, 3, selectedIndex),
+            _buildNavItem(Icons.settings, 4, selectedIndex),
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildNavItem(IconData icon, int index, int selectedIndex) {
     final isSelected = index == selectedIndex;
-    return GestureDetector(
-      onTap: () {},
-      child: Container(
-        width: 50,
-        height: 50,
-        decoration: BoxDecoration(
-          color: isSelected ? Colors.amber[700] : Colors.transparent,
-          shape: BoxShape.circle,
-        ),
-        child: Icon(
-          icon,
-          color: Colors.white,
-          size: 28,
-        ),
+    return IconButton(
+      onPressed: () {},
+      icon: Icon(icon),
+      color: isSelected ? const Color(0xFFF2CC0D) : const Color(0xFF9B9480),
+    );
+  }
+
+  Widget _buildProfileNavItem(bool isSelected) {
+    return Container(
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: isSelected ? const Color(0xFFF2CC0D) : Colors.white,
+        boxShadow: isSelected
+            ? const [
+                BoxShadow(
+                  color: Color(0x33F2CC0D),
+                  blurRadius: 12,
+                  offset: Offset(0, 6),
+                ),
+              ]
+            : null,
+      ),
+      padding: const EdgeInsets.all(12),
+      child: Icon(
+        Icons.person,
+        color: isSelected ? const Color(0xFF1C190D) : const Color(0xFF9B9480),
+        size: 28,
       ),
     );
   }
 }
 
-class ChildAvatarPainter extends CustomPainter {
+class _BackdropBlobs extends StatelessWidget {
+  const _BackdropBlobs();
+
   @override
-  void paint(Canvas canvas, Size size) {
-    final center = Offset(size.width / 2, size.height / 2);
-
-    // Head (circle)
-    final headPaint = Paint()..color = const Color(0xFFD4A574);
-    canvas.drawCircle(center, size.width * 0.4, headPaint);
-
-    // Hair
-    final hairPaint = Paint()..color = const Color(0xFF8B4513);
-    final hairPath = Path();
-    hairPath.addArc(
-      Rect.fromCenter(
-        center: Offset(center.dx, center.dy - size.height * 0.1),
-        width: size.width * 0.7,
-        height: size.width * 0.5,
-      ),
-      math.pi,
-      math.pi,
+  Widget build(BuildContext context) {
+    return Stack(
+      children: [
+        Positioned(
+          top: -120,
+          left: -80,
+          child: ImageFiltered(
+            imageFilter: ui.ImageFilter.blur(sigmaX: 80, sigmaY: 80),
+            child: Container(
+              width: 300,
+              height: 300,
+              decoration: const BoxDecoration(
+                color: Color(0x33F2CC0D),
+                shape: BoxShape.circle,
+              ),
+            ),
+          ),
+        ),
+        Positioned(
+          bottom: -160,
+          right: -120,
+          child: ImageFiltered(
+            imageFilter: ui.ImageFilter.blur(sigmaX: 80, sigmaY: 80),
+            child: Container(
+              width: 360,
+              height: 360,
+              decoration: const BoxDecoration(
+                color: Color(0x33C084FC),
+                shape: BoxShape.circle,
+              ),
+            ),
+          ),
+        ),
+      ],
     );
-    canvas.drawPath(hairPath, hairPaint);
-
-    // Face features
-    final facePaint = Paint()..color = Colors.black;
-    // Eyes
-    canvas.drawCircle(
-      Offset(center.dx - size.width * 0.12, center.dy - size.height * 0.05),
-      size.width * 0.04,
-      facePaint,
-    );
-    canvas.drawCircle(
-      Offset(center.dx + size.width * 0.12, center.dy - size.height * 0.05),
-      size.width * 0.04,
-      facePaint,
-    );
-
-    // Smile
-    final smilePath = Path();
-    smilePath.addArc(
-      Rect.fromCenter(
-        center: Offset(center.dx, center.dy + size.height * 0.05),
-        width: size.width * 0.25,
-        height: size.width * 0.15,
-      ),
-      0,
-      math.pi,
-    );
-    final smilePaint = Paint()
-      ..color = Colors.black
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 2;
-    canvas.drawPath(smilePath, smilePaint);
   }
+}
+
+class _TopAppBar extends StatelessWidget {
+  const _TopAppBar({required this.onBack, required this.onSettings});
+
+  final VoidCallback onBack;
+  final VoidCallback onSettings;
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(24, 16, 24, 8),
+      child: Row(
+        children: [
+          _CircleIconButton(icon: Icons.arrow_back_ios_new, onTap: onBack),
+          const Spacer(),
+          const Text(
+            'KIDO',
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.w800,
+              color: Color(0xFF1C190D),
+            ),
+          ),
+          const Spacer(),
+          _CircleIconButton(icon: Icons.settings, onTap: onSettings),
+        ],
+      ),
+    );
+  }
+}
+
+class _CircleIconButton extends StatelessWidget {
+  const _CircleIconButton({required this.icon, required this.onTap});
+
+  final IconData icon;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 48,
+      height: 48,
+      child: Material(
+        color: Colors.white,
+        shape: const CircleBorder(),
+        elevation: 3,
+        shadowColor: Colors.black12,
+        child: InkWell(
+          customBorder: const CircleBorder(),
+          onTap: onTap,
+          child: Icon(icon, color: const Color(0xFF1C190D)),
+        ),
+      ),
+    );
+  }
+}
+extension _ColorShade on Color {
+  Color darken([double amount = .2]) {
+    final hsl = HSLColor.fromColor(this);
+    final adjusted =
+        hsl.withLightness((hsl.lightness - amount).clamp(0.0, 1.0));
+    return adjusted.toColor();
+  }
 }

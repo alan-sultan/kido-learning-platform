@@ -1,4 +1,5 @@
 import 'dart:math' as math;
+import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 
 class SplashScreen extends StatelessWidget {
@@ -7,209 +8,324 @@ class SplashScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFFF44F),
+      backgroundColor: const Color(0xFFF2CC0D),
       body: SafeArea(
         child: Stack(
           children: [
-            // Background geometric shapes
-            Positioned.fill(
-              child: CustomPaint(
-                painter: GeometricShapesPainter(),
+            const Positioned(
+              top: -60,
+              left: -60,
+              child: _BlurBlob(
+                size: 180,
+                color: Color(0x33FFFFFF),
               ),
             ),
-            // Main content
-            Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Spacer(flex: 2),
-                // Logo
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 40,
-                    vertical: 20,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      _buildLogoLetter('K', const Color(0xFFFF69B4)),
-                      _buildLogoLetter('I', const Color(0xFF4CAF50)),
-                      _buildLogoLetter('D', const Color(0xFFFF9800)),
-                      _buildLogoLetter('O', const Color(0xFF2196F3)),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 16),
-                // Tagline
-                const Text(
-                  "Let's Play & Learn!",
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.black,
-                  ),
-                ),
-                const Spacer(flex: 3),
-                // Bear character
-                Container(
-                  width: 200,
-                  height: 200,
-                  decoration: const BoxDecoration(
-                    color: Colors.white,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Center(
-                    child: _buildBearCharacter(),
-                  ),
-                ),
-                const Spacer(flex: 3),
-                // Loading indicator
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 40),
-                  child: Column(
-                    children: [
-                      const Text(
-                        "LOADING FUN...",
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.black,
+            const Positioned(
+              top: 140,
+              right: -40,
+              child: _BlurBlob(
+                size: 140,
+                color: Color(0x33F97316),
+              ),
+            ),
+            const Positioned(
+              bottom: 160,
+              left: -30,
+              child: _BlurBlob(
+                size: 170,
+                color: Color(0x33EC4899),
+              ),
+            ),
+            const Positioned(
+              bottom: -80,
+              right: -70,
+              child: _BlurBlob(
+                size: 240,
+                color: Color(0x26FFFFFF),
+              ),
+            ),
+            const Positioned(
+              top: 48,
+              right: 36,
+              child: _FloatingIcon(
+                icon: Icons.star_rounded,
+                size: 54,
+                rotation: 0.3,
+              ),
+            ),
+            const Positioned(
+              top: 110,
+              left: 32,
+              child: _FloatingIcon(
+                icon: Icons.pentagon_outlined,
+                size: 42,
+                rotation: -0.25,
+              ),
+            ),
+            const Positioned(
+              bottom: 160,
+              left: 40,
+              child: _FloatingIcon(
+                icon: Icons.change_history,
+                size: 44,
+                rotation: 0.8,
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 28),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  const SizedBox(height: 32),
+                  const _LogoBadge(),
+                  const SizedBox(height: 18),
+                  Text(
+                    "Let's Play & Learn!",
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          fontSize: 22,
+                          fontWeight: FontWeight.w800,
+                          color: const Color(0xFF1C190D),
                         ),
-                      ),
-                      const SizedBox(height: 8),
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(10),
-                        child: const LinearProgressIndicator(
-                          minHeight: 8,
-                          backgroundColor: Colors.white,
-                          valueColor: AlwaysStoppedAnimation<Color>(
-                            Color(0xFFFF69B4),
-                          ),
-                          value: 0.6,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      const Text(
-                        "v1.0.2",
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.black87,
-                        ),
-                      ),
-                    ],
+                    textAlign: TextAlign.center,
                   ),
-                ),
-                const Spacer(flex: 2),
-              ],
+                  const Spacer(),
+                  const _MascotAvatar(),
+                  const SizedBox(height: 36),
+                  const _LoaderCard(),
+                  const SizedBox(height: 36),
+                ],
+              ),
             ),
           ],
         ),
       ),
     );
   }
+}
 
-  Widget _buildLogoLetter(String letter, Color color) {
+class _LogoBadge extends StatelessWidget {
+  const _LogoBadge();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 42, vertical: 22),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        shape: BoxShape.rectangle,
+        borderRadius: BorderRadius.circular(80),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.1),
+            blurRadius: 30,
+            offset: const Offset(0, 18),
+          ),
+        ],
+        border:
+            Border.all(color: Colors.white.withValues(alpha: 0.5), width: 4),
+      ),
+      child: const Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          _LogoLetter('K', Color(0xFFEC4899)),
+          SizedBox(width: 2),
+          _LogoLetter('I', Color(0xFF0EA5E9)),
+          SizedBox(width: 2),
+          _LogoLetter('D', Color(0xFF22C55E)),
+          SizedBox(width: 2),
+          _LogoLetter('O', Color(0xFFF97316)),
+        ],
+      ),
+    );
+  }
+}
+
+class _LogoLetter extends StatelessWidget {
+  const _LogoLetter(this.letter, this.color);
+
+  final String letter;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
     return Text(
       letter,
       style: TextStyle(
-        fontSize: 48,
-        fontWeight: FontWeight.bold,
+        fontSize: 52,
+        fontWeight: FontWeight.w800,
         color: color,
         letterSpacing: 2,
       ),
     );
   }
+}
 
-  Widget _buildBearCharacter() {
+class _MascotAvatar extends StatelessWidget {
+  const _MascotAvatar();
+
+  static const _imageUrl =
+      'https://lh3.googleusercontent.com/aida-public/AB6AXuDGzijjlGyYKrjJWVhlVKM-QVE-vSpA0UAkcFxIJtPEQxZen9NqtCRwc5aIiiAY7zUxc_OMaNtIPFR7mjk57M09YTXjzX7hI21l8ozVIisgIef97JGVIKnS3x9syiyHCeGyWeiscc_HopDSbQWWsF663WEkWblGSdNtZz-lJI__ECHjLlTpbj-AToEo43oKzu5QjdwsHSiSi1sRt-Ia8wZbaUJ_wq5j_p7vaeaI-Od-c8Hu-lEqcoCIrLzONmf_eP9sATtL-UZMmMM';
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        Container(
+          width: 260,
+          height: 260,
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            shape: BoxShape.circle,
+            border: Border.all(color: Colors.white, width: 8),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.15),
+                blurRadius: 45,
+                offset: const Offset(0, 30),
+              ),
+            ],
+          ),
+          child: ClipOval(
+            child: DecoratedBox(
+              decoration: const BoxDecoration(color: Colors.white),
+              child: Image.network(
+                _imageUrl,
+                fit: BoxFit.cover,
+                loadingBuilder: (context, child, loadingProgress) {
+                  if (loadingProgress == null) return child;
+                  return const Center(
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  );
+                },
+                errorBuilder: (context, _, __) {
+                  return Center(child: _buildFallbackBear());
+                },
+              ),
+            ),
+          ),
+        ),
+        const Positioned(
+          bottom: -12,
+          right: 8,
+          child: _FloatingIcon(
+            icon: Icons.celebration,
+            size: 74,
+            rotation: 0.1,
+            color: Color(0x4D0EA5E9),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildFallbackBear() {
     return CustomPaint(
-      size: const Size(150, 150),
+      size: const Size(180, 180),
       painter: BearPainter(),
     );
   }
 }
 
-class GeometricShapesPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = const Color(0xFFFFF9C4)
-      ..style = PaintingStyle.fill;
-
-    // Draw stars
-    for (int i = 0; i < 5; i++) {
-      final x = (i * 80.0) % size.width;
-      final y = (i * 100.0) % size.height;
-      _drawStar(canvas, paint, Offset(x, y), 15);
-    }
-
-    // Draw hexagons
-    for (int i = 0; i < 4; i++) {
-      final x = (i * 120.0) % size.width;
-      final y = (i * 150.0) % size.height;
-      _drawHexagon(canvas, paint, Offset(x, y), 20);
-    }
-
-    // Draw triangles
-    for (int i = 0; i < 6; i++) {
-      final x = (i * 90.0) % size.width;
-      final y = (i * 110.0) % size.height;
-      _drawTriangle(canvas, paint, Offset(x, y), 18);
-    }
-  }
-
-  void _drawStar(Canvas canvas, Paint paint, Offset center, double radius) {
-    final path = Path();
-    for (int i = 0; i < 5; i++) {
-      final angle = (i * 4 * math.pi / 5) - math.pi / 2;
-      final x = center.dx + radius * math.cos(angle);
-      final y = center.dy + radius * math.sin(angle);
-      if (i == 0) {
-        path.moveTo(x, y);
-      } else {
-        path.lineTo(x, y);
-      }
-    }
-    path.close();
-    canvas.drawPath(path, paint);
-  }
-
-  void _drawHexagon(Canvas canvas, Paint paint, Offset center, double radius) {
-    final path = Path();
-    for (int i = 0; i < 6; i++) {
-      final angle = (i * 2 * math.pi / 6);
-      final x = center.dx + radius * math.cos(angle);
-      final y = center.dy + radius * math.sin(angle);
-      if (i == 0) {
-        path.moveTo(x, y);
-      } else {
-        path.lineTo(x, y);
-      }
-    }
-    path.close();
-    canvas.drawPath(path, paint);
-  }
-
-  void _drawTriangle(Canvas canvas, Paint paint, Offset center, double radius) {
-    final path = Path();
-    for (int i = 0; i < 3; i++) {
-      final angle = (i * 2 * math.pi / 3) - math.pi / 2;
-      final x = center.dx + radius * math.cos(angle);
-      final y = center.dy + radius * math.sin(angle);
-      if (i == 0) {
-        path.moveTo(x, y);
-      } else {
-        path.lineTo(x, y);
-      }
-    }
-    path.close();
-    canvas.drawPath(path, paint);
-  }
+class _LoaderCard extends StatelessWidget {
+  const _LoaderCard();
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 18),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.35),
+        borderRadius: BorderRadius.circular(30),
+        border:
+            Border.all(color: Colors.white.withValues(alpha: 0.7), width: 1.5),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Text(
+            'LOADING FUN...',
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                  fontSize: 13,
+                  letterSpacing: 1.4,
+                  fontWeight: FontWeight.w700,
+                  color: const Color(0x991C190D),
+                ),
+          ),
+          const SizedBox(height: 10),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(999),
+            child: LinearProgressIndicator(
+              minHeight: 12,
+              backgroundColor: Colors.white.withValues(alpha: 0.35),
+              valueColor:
+                  const AlwaysStoppedAnimation<Color>(Color(0xFFEC4899)),
+              value: 0.6,
+            ),
+          ),
+          const SizedBox(height: 10),
+          const Text(
+            'v1.0.2',
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: Color(0x801C190D),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _FloatingIcon extends StatelessWidget {
+  const _FloatingIcon({
+    required this.icon,
+    this.size = 48,
+    this.rotation = 0,
+    this.color = const Color(0x66FFFFFF),
+  });
+
+  final IconData icon;
+  final double size;
+  final double rotation;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Transform.rotate(
+      angle: rotation,
+      child: Icon(
+        icon,
+        color: color,
+        size: size,
+      ),
+    );
+  }
+}
+
+class _BlurBlob extends StatelessWidget {
+  const _BlurBlob({required this.size, required this.color});
+
+  final double size;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return ImageFiltered(
+      imageFilter: ui.ImageFilter.blur(sigmaX: 50, sigmaY: 50),
+      child: Container(
+        width: size,
+        height: size,
+        decoration: BoxDecoration(
+          color: color,
+          shape: BoxShape.circle,
+        ),
+      ),
+    );
+  }
 }
 
 class BearPainter extends CustomPainter {
