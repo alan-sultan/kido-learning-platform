@@ -15,6 +15,7 @@ class Lesson {
   final String content;
   final int durationMinutes;
   final String quizId;
+  final Map<String, dynamic> extra;
 
   const Lesson({
     required this.id,
@@ -27,6 +28,7 @@ class Lesson {
     required this.content,
     required this.durationMinutes,
     required this.quizId,
+    this.extra = const <String, dynamic>{},
   });
 
   factory Lesson.fromDoc(DocumentSnapshot<Map<String, dynamic>> doc) {
@@ -44,6 +46,7 @@ class Lesson {
       content: data['content'] as String? ?? '',
       durationMinutes: (data['durationMinutes'] as num?)?.toInt() ?? 5,
       quizId: data['quizId'] as String? ?? '',
+      extra: _normalizeExtra(data['extra']),
     );
   }
 
@@ -58,8 +61,23 @@ class Lesson {
       'content': content,
       'durationMinutes': durationMinutes,
       'quizId': quizId,
+      'extra': extra,
       'updatedAt': FieldValue.serverTimestamp(),
     };
+  }
+
+  static Map<String, dynamic> _normalizeExtra(dynamic value) {
+    if (value is Map<String, dynamic>) {
+      return value;
+    }
+    if (value is Map) {
+      return Map<String, dynamic>.fromEntries(
+        value.entries.map(
+          (entry) => MapEntry(entry.key.toString(), entry.value),
+        ),
+      );
+    }
+    return const <String, dynamic>{};
   }
 
   static LessonIllustration _illustrationFromString(String value) {

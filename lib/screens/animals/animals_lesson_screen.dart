@@ -297,6 +297,14 @@ class _HeroPanel extends StatelessWidget {
               child: Image.network(
                 metadata.heroImageUrl,
                 fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) => Container(
+                  color: AnimalsTheme.primary.withValues(alpha: 0.1),
+                  alignment: Alignment.center,
+                  child: const Icon(
+                    Icons.image_not_supported_rounded,
+                    color: Colors.white,
+                  ),
+                ),
               ),
             ),
           ),
@@ -329,7 +337,7 @@ class _TraitGrid extends StatelessWidget {
         crossAxisCount: 2,
         mainAxisSpacing: 14,
         crossAxisSpacing: 14,
-        childAspectRatio: 0.95,
+        childAspectRatio: 0.75,
       ),
       itemCount: traits.length,
       itemBuilder: (context, index) {
@@ -352,7 +360,18 @@ class _TraitGrid extends StatelessWidget {
                   borderRadius: BorderRadius.circular(18),
                 ),
                 clipBehavior: Clip.antiAlias,
-                child: Image.network(trait.imageUrl, fit: BoxFit.cover),
+                child: Image.network(
+                  trait.imageUrl,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) => Container(
+                    color: trait.badgeColor,
+                    alignment: Alignment.center,
+                    child: const Icon(
+                      Icons.pets_rounded,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
               ),
               const SizedBox(height: 10),
               Text(
@@ -371,6 +390,8 @@ class _TraitGrid extends StatelessWidget {
                   fontWeight: FontWeight.w600,
                   color: AnimalsTheme.textMuted,
                 ),
+                maxLines: 3,
+                overflow: TextOverflow.ellipsis,
               ),
             ],
           ),

@@ -409,7 +409,18 @@ class _LessonArtwork extends StatelessWidget {
         borderRadius: BorderRadius.circular(24),
       ),
       clipBehavior: Clip.antiAlias,
-      child: Image.network(imageUrl, fit: BoxFit.cover),
+      child: Image.network(
+        imageUrl,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) => Container(
+          color: Colors.white,
+          alignment: Alignment.center,
+          child: const Icon(
+            Icons.image_not_supported_rounded,
+            color: AnimalsTheme.primary,
+          ),
+        ),
+      ),
     );
   }
 }

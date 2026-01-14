@@ -440,7 +440,7 @@ class _GalleryGrid extends StatelessWidget {
             crossAxisCount: 2,
             mainAxisSpacing: 14,
             crossAxisSpacing: 14,
-            childAspectRatio: 0.9,
+            childAspectRatio: 0.6,
           ),
           itemCount: items.length,
           itemBuilder: (context, index) {
@@ -459,7 +459,18 @@ class _GalleryGrid extends StatelessWidget {
                     borderRadius: BorderRadius.circular(18),
                     child: AspectRatio(
                       aspectRatio: 1,
-                      child: Image.network(item.imageUrl, fit: BoxFit.cover),
+                      child: Image.network(
+                        item.imageUrl,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) => Container(
+                          color: Colors.white10,
+                          alignment: Alignment.center,
+                          child: const Icon(
+                            Icons.image_not_supported_outlined,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
                     ),
                   ),
                   const SizedBox(height: 10),
@@ -479,6 +490,8 @@ class _GalleryGrid extends StatelessWidget {
                       fontWeight: FontWeight.w600,
                       color: ShapesTheme.textMuted,
                     ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ],
               ),

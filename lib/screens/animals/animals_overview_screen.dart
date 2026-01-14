@@ -330,12 +330,18 @@ class _HeroIllustration extends StatelessWidget {
             ],
           ),
           padding: const EdgeInsets.all(18),
-          child: DecoratedBox(
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              image: DecorationImage(
-                image: NetworkImage(imageUrl),
-                fit: BoxFit.cover,
+          child: ClipOval(
+            child: Image.network(
+              imageUrl,
+              fit: BoxFit.cover,
+              errorBuilder: (context, error, stackTrace) => Container(
+                color: Colors.white,
+                alignment: Alignment.center,
+                child: const Icon(
+                  Icons.pets_rounded,
+                  color: AnimalsTheme.primary,
+                  size: 48,
+                ),
               ),
             ),
           ),

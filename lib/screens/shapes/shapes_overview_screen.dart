@@ -337,7 +337,19 @@ class _HeroIllustration extends StatelessWidget {
           padding: const EdgeInsets.all(18),
           child: ClipRRect(
             borderRadius: BorderRadius.circular(28),
-            child: Image.network(imageUrl, fit: BoxFit.cover),
+            child: Image.network(
+              imageUrl,
+              fit: BoxFit.cover,
+              errorBuilder: (context, error, stackTrace) => Container(
+                color: Colors.white,
+                alignment: Alignment.center,
+                child: const Icon(
+                  Icons.image_not_supported_outlined,
+                  color: ShapesTheme.primary,
+                  size: 42,
+                ),
+              ),
+            ),
           ),
         ),
       ),
