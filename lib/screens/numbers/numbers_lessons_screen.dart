@@ -154,7 +154,6 @@ class _LessonListBody extends StatelessWidget {
             },
           ),
         ),
-        const _BottomTabs(),
       ],
     );
   }
@@ -486,69 +485,6 @@ String _ctaLabel(LessonPlayStatus status) {
       return 'Start';
     case LessonPlayStatus.locked:
       return 'Locked';
-  }
-}
-
-class _BottomTabs extends StatelessWidget {
-  const _BottomTabs();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
-        boxShadow: [
-          BoxShadow(
-            color: Color(0x16000000),
-            blurRadius: 20,
-            offset: Offset(0, -6),
-          ),
-        ],
-      ),
-      child: const Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          _TabIcon(icon: Icons.home_rounded, label: 'Home', active: true),
-          _TabIcon(icon: Icons.auto_stories_rounded, label: 'Lessons'),
-          _TabIcon(icon: Icons.emoji_events_rounded, label: 'Awards'),
-          _TabIcon(icon: Icons.person_rounded, label: 'Profile'),
-        ],
-      ),
-    );
-  }
-}
-
-class _TabIcon extends StatelessWidget {
-  const _TabIcon({
-    required this.icon,
-    required this.label,
-    this.active = false,
-  });
-
-  final IconData icon;
-  final String label;
-  final bool active;
-
-  @override
-  Widget build(BuildContext context) {
-    final color = active ? NumbersTheme.primary : NumbersTheme.textMuted;
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(icon, color: color),
-        const SizedBox(height: 4),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 10,
-            fontWeight: FontWeight.w700,
-            color: color,
-          ),
-        ),
-      ],
-    );
   }
 }
 

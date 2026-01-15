@@ -264,7 +264,6 @@ class _OverviewBody extends StatelessWidget {
             ),
           ),
         ),
-        const _BottomNav(),
       ],
     );
   }
@@ -431,70 +430,6 @@ class _ProgressCard extends StatelessWidget {
     );
   }
 }
-
-class _BottomNav extends StatelessWidget {
-  const _BottomNav();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.9),
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x16000000),
-            blurRadius: 20,
-            offset: Offset(0, -6),
-          ),
-        ],
-      ),
-      child: const Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          _NavIcon(icon: Icons.home, label: 'HOME', active: true),
-          _NavIcon(icon: Icons.category, label: 'TOPICS'),
-          _NavIcon(icon: Icons.military_tech, label: 'AWARDS'),
-          _NavIcon(icon: Icons.person, label: 'PROFILE'),
-        ],
-      ),
-    );
-  }
-}
-
-class _NavIcon extends StatelessWidget {
-  const _NavIcon({
-    required this.icon,
-    required this.label,
-    this.active = false,
-  });
-
-  final IconData icon;
-  final String label;
-  final bool active;
-
-  @override
-  Widget build(BuildContext context) {
-    final color = active ? ColorsTheme.primary : ColorsTheme.textMuted;
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(icon, color: color),
-        const SizedBox(height: 4),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 10,
-            fontWeight: FontWeight.w700,
-            color: color,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
 class _ErrorNotice extends StatelessWidget {
   const _ErrorNotice(this.message);
 

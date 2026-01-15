@@ -154,7 +154,6 @@ class _LessonListBody extends StatelessWidget {
             },
           ),
         ),
-        const _BottomNav(),
       ],
     );
   }
@@ -508,76 +507,6 @@ String _ctaLabel(LessonPlayStatus status) {
       return 'Start';
     case LessonPlayStatus.locked:
       return 'Locked';
-  }
-}
-
-class _BottomNav extends StatelessWidget {
-  const _BottomNav();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
-        boxShadow: [
-          BoxShadow(
-            color: Color(0x16000000),
-            blurRadius: 20,
-            offset: Offset(0, -6),
-          ),
-        ],
-      ),
-      child: const Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          _NavIcon(
-            icon: Icons.home_rounded,
-            label: 'Home',
-            active: true,
-          ),
-          _NavIcon(icon: Icons.pets_rounded, label: 'Animals'),
-          _NavIcon(
-            icon: Icons.workspace_premium_rounded,
-            label: 'Awards',
-          ),
-          _NavIcon(icon: Icons.person_rounded, label: 'Profile'),
-        ],
-      ),
-    );
-  }
-}
-
-class _NavIcon extends StatelessWidget {
-  const _NavIcon({
-    required this.icon,
-    required this.label,
-    this.active = false,
-  });
-
-  final IconData icon;
-  final String label;
-  final bool active;
-
-  @override
-  Widget build(BuildContext context) {
-    final color = active ? AnimalsTheme.primary : AnimalsTheme.textMuted;
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(icon, color: color),
-        const SizedBox(height: 4),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 10,
-            fontWeight: FontWeight.w700,
-            color: color,
-          ),
-        ),
-      ],
-    );
   }
 }
 
