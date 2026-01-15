@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../models/child_profile.dart';
 import '../models/progress_record.dart';
 import '../models/lesson.dart';
+import '../services/achievement_service.dart';
 import '../services/app_services.dart';
 import 'category_listing_screen.dart';
 import 'login_screen.dart';
@@ -288,7 +289,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
               ),
             ),
             const SizedBox(height: 16),
-            _buildStickers(profile.badges),
+            _buildStickers(AchievementService.deriveBadges(profile)),
             const SizedBox(height: 30),
           ],
         ),
@@ -412,15 +413,15 @@ class _ProgressScreenState extends State<ProgressScreen> {
     );
   }
 
-  Widget _buildStickers(List<String> badges) {
-    final items = badges.isEmpty
+  Widget _buildStickers(List<String> achievements) {
+    final items = achievements.isEmpty
         ? ['WISE OWL', 'FAST HOP', 'STEADY']
-        : badges.take(3).map((b) => b.toUpperCase()).toList();
+        : achievements.take(3).map((b) => b.toUpperCase()).toList();
 
     return Row(
       children: List.generate(items.length, (index) {
         final colorSwatchValue = 400 + index * 100;
-        final color = badges.isEmpty
+        final color = achievements.isEmpty
             ? (index == 0
                 ? Colors.amber[700]!
                 : index == 1

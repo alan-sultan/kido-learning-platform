@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../data/avatar_catalog.dart';
 import '../models/child_profile.dart';
+import '../services/achievement_service.dart';
 import '../services/app_services.dart';
 import 'edit_profile_screen.dart';
 import 'login_screen.dart';
@@ -106,9 +107,10 @@ class _ChildProfileScreenState extends State<ChildProfileScreen> {
     List<ChildProfile> profiles,
     ChildProfile profile,
   ) {
-    final badgeLabel = profile.badges.isNotEmpty
-        ? '+ ${profile.badges.first.toUpperCase()}'
-        : '+ SUPER LEARNER';
+    final achievements = AchievementService.deriveBadges(profile);
+    final badgeLabel = achievements.isNotEmpty
+      ? '+ ${achievements.first.toUpperCase()}'
+      : '+ SUPER LEARNER';
 
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(24, 0, 24, 140),
@@ -442,7 +444,7 @@ class _ChildProfileScreenState extends State<ChildProfileScreen> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (context) {
-        final badges = profile.badges;
+        final badges = AchievementService.deriveBadges(profile);
         return SafeArea(
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(24),

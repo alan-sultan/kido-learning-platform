@@ -2,103 +2,179 @@ import 'dart:math' as math;
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 
-class SplashScreen extends StatelessWidget {
+class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
+
+  @override
+  State<SplashScreen> createState() => _SplashScreenState();
+}
+
+class _SplashScreenState extends State<SplashScreen>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+  late final Animation<double> _progress;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 5),
+    )..forward();
+    _progress = CurvedAnimation(
+      parent: _controller,
+      curve: Curves.easeInOutCubic,
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF2CC0D),
+      backgroundColor: const Color(0xFFF8F8F5),
       body: SafeArea(
-        child: Stack(
-          children: [
-            const Positioned(
-              top: -60,
-              left: -60,
-              child: _BlurBlob(
-                size: 180,
-                color: Color(0x33FFFFFF),
-              ),
-            ),
-            const Positioned(
-              top: 140,
-              right: -40,
-              child: _BlurBlob(
-                size: 140,
-                color: Color(0x33F97316),
-              ),
-            ),
-            const Positioned(
-              bottom: 160,
-              left: -30,
-              child: _BlurBlob(
-                size: 170,
-                color: Color(0x33EC4899),
-              ),
-            ),
-            const Positioned(
-              bottom: -80,
-              right: -70,
-              child: _BlurBlob(
-                size: 240,
-                color: Color(0x26FFFFFF),
-              ),
-            ),
-            const Positioned(
-              top: 48,
-              right: 36,
-              child: _FloatingIcon(
-                icon: Icons.star_rounded,
-                size: 54,
-                rotation: 0.3,
-              ),
-            ),
-            const Positioned(
-              top: 110,
-              left: 32,
-              child: _FloatingIcon(
-                icon: Icons.pentagon_outlined,
-                size: 42,
-                rotation: -0.25,
-              ),
-            ),
-            const Positioned(
-              bottom: 160,
-              left: 40,
-              child: _FloatingIcon(
-                icon: Icons.change_history,
-                size: 44,
-                rotation: 0.8,
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 28),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  const SizedBox(height: 32),
-                  const _LogoBadge(),
-                  const SizedBox(height: 18),
-                  Text(
-                    "Let's Play & Learn!",
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontSize: 22,
-                          fontWeight: FontWeight.w800,
-                          color: const Color(0xFF1C190D),
+        child: Container(
+          width: double.infinity,
+          height: double.infinity,
+          color: const Color(0xFFF2CC0D),
+          child: Stack(
+            children: [
+              const _BackgroundDecor(),
+              Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+                child: Column(
+                  children: [
+                    const SizedBox(height: 32),
+                    Expanded(
+                      child: Center(
+                        child: ConstrainedBox(
+                          constraints: const BoxConstraints(maxWidth: 420),
+                          child: const Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              _LogoBadge(),
+                              SizedBox(height: 18),
+                              _Tagline(),
+                              SizedBox(height: 32),
+                              _MascotAvatar(),
+                            ],
+                          ),
                         ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const Spacer(),
-                  const _MascotAvatar(),
-                  const SizedBox(height: 36),
-                  const _LoaderCard(),
-                  const SizedBox(height: 36),
-                ],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 320),
+                      child: AnimatedBuilder(
+                        animation: _progress,
+                        builder: (context, _) {
+                          return _LoaderFooter(progress: _progress.value);
+                        },
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
+    );
+  }
+}
+
+class _Tagline extends StatelessWidget {
+  const _Tagline();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Text(
+      "Let's Play & Learn!",
+      textAlign: TextAlign.center,
+      style: TextStyle(
+        fontSize: 20,
+        fontWeight: FontWeight.w800,
+        color: Color(0xCC1C190D),
+      ),
+    );
+  }
+}
+
+class _BackgroundDecor extends StatelessWidget {
+  const _BackgroundDecor();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Stack(
+      children: [
+        Positioned(
+          top: -50,
+          left: -50,
+          child: _BlurBlob(size: 200, color: Color(0x33FFFFFF)),
+        ),
+        Positioned(
+          top: 140,
+          right: -40,
+          child: _BlurBlob(size: 140, color: Color(0x33F97316)),
+        ),
+        Positioned(
+          bottom: 140,
+          left: -30,
+          child: _BlurBlob(size: 170, color: Color(0x33EC4899)),
+        ),
+        Positioned(
+          bottom: -80,
+          right: -70,
+          child: _BlurBlob(size: 240, color: Color(0x26FFFFFF)),
+        ),
+        Positioned(
+          top: 24,
+          right: 24,
+          child: _FloatingIcon(
+            icon: Icons.star,
+            size: 56,
+            rotation: 0.2,
+            color: Color(0x66FFFFFF),
+          ),
+        ),
+        Positioned(
+          top: 100,
+          left: 28,
+          child: _FloatingIcon(
+            icon: Icons.pentagon_outlined,
+            size: 44,
+            rotation: -0.3,
+            color: Color(0x66FFFFFF),
+          ),
+        ),
+        Positioned(
+          bottom: 140,
+          left: 36,
+          child: _FloatingIcon(
+            icon: Icons.change_history,
+            size: 48,
+            rotation: 0.8,
+            color: Color(0x66FFFFFF),
+          ),
+        ),
+        Positioned(
+          bottom: 60,
+          right: 40,
+          child: _FloatingIcon(
+            icon: Icons.celebration,
+            size: 72,
+            rotation: 0.1,
+            color: Color(0x330EA5E9),
+          ),
+        ),
+      ],
     );
   }
 }
@@ -109,16 +185,15 @@ class _LogoBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 42, vertical: 22),
+      padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 20),
       decoration: BoxDecoration(
         color: Colors.white,
-        shape: BoxShape.rectangle,
-        borderRadius: BorderRadius.circular(80),
+        borderRadius: BorderRadius.circular(999),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.1),
-            blurRadius: 30,
-            offset: const Offset(0, 18),
+            color: Colors.black.withValues(alpha: 0.15),
+            blurRadius: 35,
+            offset: const Offset(0, 16),
           ),
         ],
         border:
@@ -128,11 +203,11 @@ class _LogoBadge extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           _LogoLetter('K', Color(0xFFEC4899)),
-          SizedBox(width: 2),
+          SizedBox(width: 4),
           _LogoLetter('I', Color(0xFF0EA5E9)),
-          SizedBox(width: 2),
+          SizedBox(width: 4),
           _LogoLetter('D', Color(0xFF22C55E)),
-          SizedBox(width: 2),
+          SizedBox(width: 4),
           _LogoLetter('O', Color(0xFFF97316)),
         ],
       ),
@@ -168,55 +243,63 @@ class _MascotAvatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      clipBehavior: Clip.none,
-      children: [
-        Container(
-          width: 260,
-          height: 260,
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            shape: BoxShape.circle,
-            border: Border.all(color: Colors.white, width: 8),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.15),
-                blurRadius: 45,
-                offset: const Offset(0, 30),
+    return ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: 320),
+      child: SizedBox(
+        width: 320,
+        height: 320,
+        child: Stack(
+          alignment: Alignment.center,
+          clipBehavior: Clip.none,
+          children: [
+            Container(
+              width: double.infinity,
+              height: double.infinity,
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                shape: BoxShape.circle,
+                border: Border.all(color: Colors.white, width: 8),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.2),
+                    blurRadius: 50,
+                    offset: const Offset(0, 30),
+                  ),
+                ],
               ),
-            ],
-          ),
-          child: ClipOval(
-            child: DecoratedBox(
-              decoration: const BoxDecoration(color: Colors.white),
-              child: Image.network(
-                _imageUrl,
-                fit: BoxFit.cover,
-                loadingBuilder: (context, child, loadingProgress) {
-                  if (loadingProgress == null) return child;
-                  return const Center(
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  );
-                },
-                errorBuilder: (context, _, __) {
-                  return Center(child: _buildFallbackBear());
-                },
+              child: ClipOval(
+                child: DecoratedBox(
+                  decoration: const BoxDecoration(color: Colors.white),
+                  child: Image.network(
+                    _imageUrl,
+                    fit: BoxFit.cover,
+                    loadingBuilder: (context, child, loadingProgress) {
+                      if (loadingProgress == null) return child;
+                      return const Center(
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      );
+                    },
+                    errorBuilder: (context, _, __) {
+                      return Center(child: _buildFallbackBear());
+                    },
+                  ),
+                ),
               ),
             ),
-          ),
+            const Positioned(
+              bottom: -16,
+              right: 12,
+              child: _FloatingIcon(
+                icon: Icons.celebration,
+                size: 80,
+                rotation: 0.1,
+                color: Color(0x330EA5E9),
+              ),
+            ),
+          ],
         ),
-        const Positioned(
-          bottom: -12,
-          right: 8,
-          child: _FloatingIcon(
-            icon: Icons.celebration,
-            size: 74,
-            rotation: 0.1,
-            color: Color(0x4D0EA5E9),
-          ),
-        ),
-      ],
+      ),
     );
   }
 
@@ -228,54 +311,74 @@ class _MascotAvatar extends StatelessWidget {
   }
 }
 
-class _LoaderCard extends StatelessWidget {
-  const _LoaderCard();
+class _LoaderFooter extends StatelessWidget {
+  const _LoaderFooter({required this.progress});
+
+  final double progress;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 18),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.35),
-        borderRadius: BorderRadius.circular(30),
-        border:
-            Border.all(color: Colors.white.withValues(alpha: 0.7), width: 1.5),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Text(
-            'LOADING FUN...',
-            style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  fontSize: 13,
-                  letterSpacing: 1.4,
-                  fontWeight: FontWeight.w700,
-                  color: const Color(0x991C190D),
-                ),
+    final clamped = progress.clamp(0.0, 1.0);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        const Text(
+          'LOADING FUN...',
+          style: TextStyle(
+            fontSize: 13,
+            letterSpacing: 1.6,
+            fontWeight: FontWeight.w700,
+            color: Color(0x991C190D),
           ),
-          const SizedBox(height: 10),
-          ClipRRect(
+        ),
+        const SizedBox(height: 10),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(2),
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.45),
             borderRadius: BorderRadius.circular(999),
-            child: LinearProgressIndicator(
-              minHeight: 12,
-              backgroundColor: Colors.white.withValues(alpha: 0.35),
-              valueColor:
-                  const AlwaysStoppedAnimation<Color>(Color(0xFFEC4899)),
-              value: 0.6,
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x1A000000),
+                blurRadius: 12,
+                offset: Offset(0, 6),
+              ),
+            ],
+          ),
+          child: SizedBox(
+            height: 16,
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final width = constraints.maxWidth * clamped;
+                final minFill = constraints.maxWidth * 0.08;
+                final barWidth =
+                    clamped == 0 ? minFill : math.max(width, minFill);
+                return Align(
+                  alignment: Alignment.centerLeft,
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 300),
+                    width: barWidth,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFEC4899),
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                  ),
+                );
+              },
             ),
           ),
-          const SizedBox(height: 10),
-          const Text(
-            'v1.0.2',
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: Color(0x801C190D),
-            ),
+        ),
+        const SizedBox(height: 12),
+        const Text(
+          'v1.0.2',
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            color: Color(0x801C190D),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
